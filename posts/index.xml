@@ -1,15 +1,16 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
-        <title>All Posts - 我的全新 Hugo 网站</title>
+        <title>All Posts - guoweikuang 技术博客</title>
         <link>https://guoweikuang.github.io/posts/</link>
-        <description>All Posts | 我的全新 Hugo 网站</description>
-        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Wed, 08 May 2024 12:03:30 &#43;0800</lastBuildDate><atom:link href="https://guoweikuang.github.io/posts/" rel="self" type="application/rss+xml" /><item>
-    <title>First_post</title>
-    <link>https://guoweikuang.github.io/posts/first_post/</link>
+        <description>All Posts | guoweikuang 技术博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>guoweikuang2015@gmail.com (guoweikuang)</managingEditor>
+            <webMaster>guoweikuang2015@gmail.com (guoweikuang)</webMaster><lastBuildDate>Wed, 08 May 2024 12:03:30 &#43;0800</lastBuildDate><atom:link href="https://guoweikuang.github.io/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>Kubernetes HPA 浅入深出</title>
+    <link>https://guoweikuang.github.io/posts/2024-05-09/</link>
     <pubDate>Wed, 08 May 2024 12:03:30 &#43;0800</pubDate>
-    <author>xxxx</author>
-    <guid>https://guoweikuang.github.io/posts/first_post/</guid>
-    <description><![CDATA[]]></description>
+    <author>guoweikuang</author>
+    <guid>https://guoweikuang.github.io/posts/2024-05-09/</guid>
+    <description><![CDATA[HPA 是 Kubernetes 提供了一个弹性伸缩的重要功能，简单来说就是支持在应用资源消耗量很大的情况下，根据用户配置的阈值来自动进行扩容，减少人工的介入；在应用资]]></description>
 </item>
 </channel>
 </rss>
