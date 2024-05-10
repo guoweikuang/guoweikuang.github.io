@@ -1,0 +1,16 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>Kustomize - Tag - guoweikuang 技术博客</title>
+        <link>https://guoweikuang.github.io/tags/kustomize/</link>
+        <description>Kustomize - Tag - guoweikuang 技术博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>guoweikuang2015@gmail.com (guoweikuang)</managingEditor>
+            <webMaster>guoweikuang2015@gmail.com (guoweikuang)</webMaster><lastBuildDate>Sat, 19 Oct 2019 12:03:30 &#43;0800</lastBuildDate><atom:link href="https://guoweikuang.github.io/tags/kustomize/" rel="self" type="application/rss+xml" /><item>
+    <title>kustomize 最简实践</title>
+    <link>https://guoweikuang.github.io/posts/kustomize/</link>
+    <pubDate>Sat, 19 Oct 2019 12:03:30 &#43;0800</pubDate>
+    <author>guoweikuang</author>
+    <guid>https://guoweikuang.github.io/posts/kustomize/</guid>
+    <description><![CDATA[背景 备注：几个月前写的，内容可能已经过时或者更新。 在 Kubernetes v1.14 版本的发布说明中，kustomize 成为了 kubectl 内置的子命令，并说明了 kustomize 使用 Kubernetes 原生概念帮]]></description>
+</item>
+</channel>
+</rss>

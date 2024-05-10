@@ -13,6 +13,14 @@
     <description><![CDATA[HPA 是 Kubernetes 提供了一个弹性伸缩的重要功能，简单来说就是支持在应用资源消耗量很大的情况下，根据用户配置的阈值来自动进行扩容，减少人工的介入；在应用资]]></description>
 </item>
 <item>
+    <title>kustomize 最简实践</title>
+    <link>https://guoweikuang.github.io/posts/kustomize/</link>
+    <pubDate>Sat, 19 Oct 2019 12:03:30 &#43;0800</pubDate>
+    <author>guoweikuang</author>
+    <guid>https://guoweikuang.github.io/posts/kustomize/</guid>
+    <description><![CDATA[背景 备注：几个月前写的，内容可能已经过时或者更新。 在 Kubernetes v1.14 版本的发布说明中，kustomize 成为了 kubectl 内置的子命令，并说明了 kustomize 使用 Kubernetes 原生概念帮]]></description>
+</item>
+<item>
     <title>Helm 从入门到实践</title>
     <link>https://guoweikuang.github.io/posts/helm/</link>
     <pubDate>Sun, 04 Nov 2018 12:03:30 &#43;0800</pubDate>
