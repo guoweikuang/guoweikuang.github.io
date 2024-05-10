@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>Helm 从入门到实践 - guoweikuang 技术博客</title><meta name="Description" content=""><meta property="og:url" content="https://guoweikuang.github.io/posts/helm/">
+  <meta property="og:site_name" content="guoweikuang 技术博客">
+  <meta property="og:title" content="Helm 从入门到实践">
+  <meta property="og:description" content="Helm 是 Kubernetes 的软件包管理工具。本文需要读者对 Docker、Kubernetes 等相关知识有一定的了解。 本文将介绍 Helm 中的相关概念和基本工作原理，并通">
+  <meta property="og:locale" content="zh-CN">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2024-05-08T12:03:30+08:00">
+    <meta property="article:modified_time" content="2024-05-08T12:03:30+08:00">
+    <meta property="article:tag" content="云原生">
+    <meta property="article:tag" content="Golang">
+<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Helm 从入门到实践">
+<meta name="twitter:description" content="Helm 是 Kubernetes 的软件包管理工具。本文需要读者对 Docker、Kubernetes 等相关知识有一定的了解。 本文将介绍 Helm 中的相关概念和基本工作原理，并通">
+<meta name="application-name" content="guoweikuang 技术博客">
+<meta name="apple-mobile-web-app-title" content="guoweikuang 技术博客"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://guoweikuang.github.io/posts/helm/" /><link rel="prev" href="https://guoweikuang.github.io/posts/2024-05-09/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Helm 从入门到实践",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/guoweikuang.github.io\/posts\/helm\/"
+        },"genre": "posts","keywords": "云原生, Golang","wordcount":  4245 ,
+        "url": "https:\/\/guoweikuang.github.io\/posts\/helm\/","datePublished": "2024-05-08T12:03:30+08:00","dateModified": "2024-05-08T12:03:30+08:00","publisher": {
+            "@type": "Organization",
+            "name": "guoweikuang"},"author": {
+                "@type": "Person",
+                "name": "guoweikuang"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="" data-header-mobile=""><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : '' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="guoweikuang 技术博客">guoweikuang 技术博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="guoweikuang 技术博客">guoweikuang 技术博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">Helm 从入门到实践</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://github.com/guoweikuang" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>guoweikuang</a></span>&nbsp;<span class="post-category">included in <a href="/categories/kubernetes/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>Kubernetes</a>&nbsp;<a href="/categories/helm/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>Helm</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2024-05-08">2024-05-08</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;4245 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;9 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#helm-是什么">Helm 是什么？？</a></li>
+        <li><a href="#helm-解决了什么痛点">Helm 解决了什么痛点？</a></li>
+        <li><a href="#helm-相关组件及概念">Helm 相关组件及概念</a></li>
+        <li><a href="#helm-原理">Helm 原理</a></li>
+        <li><a href="#chart-的基本结构">chart 的基本结构</a></li>
+        <li><a href="#安装helm">安装Helm</a></li>
+        <li><a href="#安装-tiller">安装 Tiller</a></li>
+        <li><a href="#使用-helm-操作-chart">使用 Helm 操作 Chart</a></li>
+        <li><a href="#chart-模板示例">Chart 模板示例</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>Helm 是 Kubernetes 的软件包管理工具。本文需要读者对 Docker、Kubernetes 等相关知识有一定的了解。 本文将介绍 Helm 中的相关概念和基本工作原理，并通过一些简单的示例来演示如何使用Helm来安装、升级、回滚一个 Kubernetes 应用。</p>
+<h3 id="helm-是什么">Helm 是什么？？</h3>
+<p>Helm 是 Kubernetes 的包管理器。包管理器类似于我们在 Ubuntu 中使用的apt、Centos中使用的yum 或者Python中的 pip 一样，能快速查找、下载和安装软件包。Helm 由客户端组件 helm 和服务端组件 Tiller 组成, 能够将一组K8S资源打包统一管理, 是查找、共享和使用为Kubernetes构建的软件的最佳方式。</p>
+<h3 id="helm-解决了什么痛点">Helm 解决了什么痛点？</h3>
+<p>在 Kubernetes中部署一个可以使用的应用，需要涉及到很多的 Kubernetes 资源的共同协作。比如你安装一个 WordPress 博客，用到了一些 Kubernetes (下面全部简称k8s)的一些资源对象，包括 Deployment 用于部署应用、Service 提供服务发现、Secret 配置 WordPress 的用户名和密码，可能还需要 pv 和 pvc 来提供持久化服务。并且 WordPress 数据是存储在mariadb里面的，所以需要 mariadb 启动就绪后才能启动 WordPress。这些 k8s 资源过于分散，不方便进行管理，直接通过 kubectl 来管理一个应用，你会发现这十分蛋疼。
+所以总结以上，我们在 k8s 中部署一个应用，通常面临以下几个问题：</p>
+<ul>
+<li>如何统一管理、配置和更新这些分散的 k8s 的应用资源文件</li>
+<li>如何分发和复用一套应用模板</li>
+<li>如何将应用的一系列资源当做一个软件包管理</li>
+</ul>
+<h3 id="helm-相关组件及概念">Helm 相关组件及概念</h3>
+<p>Helm 包含两个组件，分别是 helm 客户端 和 Tiller 服务器：</p>
+<ul>
+<li><strong>helm</strong> 是一个命令行工具，用于本地开发及管理chart，chart仓库管理等</li>
+<li><strong>Tiller</strong> 是 Helm 的服务端。Tiller 负责接收 Helm 的请求，与 k8s 的 apiserver 交互，根据chart 来生成一个 release 并管理 release</li>
+<li><strong>chart</strong> Helm的打包格式叫做chart，所谓chart就是一系列文件, 它描述了一组相关的 k8s 集群资源</li>
+<li><strong>release</strong> 使用 helm install 命令在 Kubernetes 集群中部署的 Chart 称为 Release</li>
+<li>Repoistory Helm chart 的仓库，Helm 客户端通过 HTTP 协议来访问存储库中 chart 的索引文件和压缩包</li>
+</ul>
+<h3 id="helm-原理">Helm 原理</h3>
+<p>下面两张图描述了 Helm 的几个关键组件 Helm（客户端）、Tiller（服务器）、Repository（Chart 软件仓库）、Chart（软件包）之间的关系以及它们之间如何通信
+<a href="https://imgse.com/i/pkZG9Vf" target="_blank" rel="noopener noreffer "><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://s21.ax1x.com/2024/05/10/pkZG9Vf.webp"
+        data-srcset="https://s21.ax1x.com/2024/05/10/pkZG9Vf.webp, https://s21.ax1x.com/2024/05/10/pkZG9Vf.webp 1.5x, https://s21.ax1x.com/2024/05/10/pkZG9Vf.webp 2x"
+        data-sizes="auto"
+        alt="https://s21.ax1x.com/2024/05/10/pkZG9Vf.webp"
+        title="helm 组件通信" /></a></p>
+<p><a href="https://imgse.com/i/pkZGkGQ" target="_blank" rel="noopener noreffer "><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://s21.ax1x.com/2024/05/10/pkZGkGQ.webp"
+        data-srcset="https://s21.ax1x.com/2024/05/10/pkZGkGQ.webp, https://s21.ax1x.com/2024/05/10/pkZGkGQ.webp 1.5x, https://s21.ax1x.com/2024/05/10/pkZGkGQ.webp 2x"
+        data-sizes="auto"
+        alt="https://s21.ax1x.com/2024/05/10/pkZGkGQ.webp"
+        title="helm 架构" /></a></p>
+<p><strong>创建release</strong></p>
+<ul>
+<li>helm 客户端从指定的目录或本地tar文件或远程repo仓库解析出chart的结构信息</li>
+<li>helm 客户端指定的 chart 结构和 values 信息通过 gRPC 传递给 Tiller</li>
+<li>Tiller 服务端根据 chart 和 values 生成一个 release</li>
+<li>Tiller 将install release请求直接传递给 kube-apiserver</li>
+</ul>
+<p><strong>删除release</strong></p>
+<ul>
+<li>helm 客户端从指定的目录或本地tar文件或远程repo仓库解析出chart的结构信息</li>
+<li>helm 客户端指定的 chart 结构和 values 信息通过 gRPC 传递给 Tiller</li>
+<li>Tiller 服务端根据 chart 和 values 生成一个 release</li>
+<li>Tiller 将delete release请求直接传递给 kube-apiserver</li>
+</ul>
+<p><strong>更新release</strong></p>
+<ul>
+<li>helm 客户端将需要更新的 chart 的 release 名称 chart 结构和 value 信息传给 Tiller</li>
+<li>Tiller 将收到的信息生成新的 release，并同时更新这个 release 的 history</li>
+<li>Tiller 将新的 release 传递给 kube-apiserver 进行更新</li>
+</ul>
+<h3 id="chart-的基本结构">chart 的基本结构</h3>
+<p>Helm的打包格式叫做chart，所谓chart就是一系列文件, 它描述了一组相关的 k8s 集群资源。Chart中的文件安装特定的目录结构组织, 最简单的chart 目录如下所示：</p>
+<p><a href="https://imgse.com/i/pkZGA2j" target="_blank" rel="noopener noreffer "><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://s21.ax1x.com/2024/05/10/pkZGA2j.webp"
+        data-srcset="https://s21.ax1x.com/2024/05/10/pkZGA2j.webp, https://s21.ax1x.com/2024/05/10/pkZGA2j.webp 1.5x, https://s21.ax1x.com/2024/05/10/pkZGA2j.webp 2x"
+        data-sizes="auto"
+        alt="https://s21.ax1x.com/2024/05/10/pkZGA2j.webp"
+        title="chart 结构" /></a></p>
+<ul>
+<li>charts 目录存放依赖的chart</li>
+<li>Chart.yaml 包含Chart的基本信息，包括chart版本，名称等</li>
+<li>templates 目录下存放应用一系列 k8s 资源的 yaml 模板</li>
+<li>_helpers.tpl 此文件中定义一些可重用的模板片断，此文件中的定义在任何资源定义模板中可用</li>
+<li>NOTES.txt 介绍chart 部署后的帮助信息，如何使用chart等</li>
+<li>values.yaml 包含了必要的值定义（默认值）, 用于存储 templates 目录中模板文件中用到变量的值</li>
+</ul>
+<h3 id="安装helm">安装Helm</h3>
+<p>Helm 提供了几种安装方式，本文提供两种安装方式，想要查看更多安装方式，请阅读 Helm 的<a href="https://docs.helm.sh/using_helm/#installing-helm" target="_blank" rel="noopener noreffer ">官方文档</a>：</p>
+<ul>
+<li>手动安装方式</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">$ 下载 Helm 二进制文件
+</span></span><span class="line"><span class="cl">$ wget https://storage.googleapis.com/kubernetes-helm/helm-v2.9.1-linux-amd64.tar.gz
+</span></span><span class="line"><span class="cl">$ 解压缩
+</span></span><span class="line"><span class="cl">$ tar -zxvf helm-v2.9.1-linux-amd64.tar.gz
+</span></span><span class="line"><span class="cl">$ 复制 helm 二进制 到bin目录下
+</span></span><span class="line"><span class="cl"><span class="nv">$cp</span> linux-amd64/helm /usr/local/bin/
+</span></span></code></pre></div><ul>
+<li>使用官方提供的脚本一键安装</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">$ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get &gt; get_helm.sh
+</span></span><span class="line"><span class="cl">$ chmod <span class="m">700</span> get_helm.sh
+</span></span><span class="line"><span class="cl">$ ./get_helm.sh
+</span></span></code></pre></div><p>你还可以通过 Helm 的 <a href="https://github.com/helm/helm/releases" target="_blank" rel="noopener noreffer ">github</a> 项目下找到你想要的 Helm 版本的二进制，然后通过手动安装方式一样安装即可</p>
+<h3 id="安装-tiller">安装 Tiller</h3>
+<p>安装好 helm 客户端后，就可以通过以下命令将 Tiller 安装在 kubernetes 集群中：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">helm init
+</span></span></code></pre></div><p>这个地方默认使用 “https://kubernetes-charts.storage.googleapis.com” 作为缺省的 stable repository 的地址，但由于国内有一张无形的墙的存在，googleapis.com 是不能访问的。可以使用阿里云的源来配置：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">helm init --upgrade -i registry.cn-hangzhou.aliyuncs.com/google_containers/tiller:v2.9.1  --stable-repo-url https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
+</span></span></code></pre></div><p>执行上面命令后，可以通过 kubectl get po -n kube-system 来查看 tiller 的安装情况。</p>
+<p>由于 kubernetes 从1.6 版本开始加入了 RBAC 授权。当前的 Tiller 没有定义用于授权的 ServiceAccount， 访问 API Server 时会被拒绝，需要给 Tiller 加入授权。</p>
+<ul>
+<li>创建 Kubernetes 的服务帐号和绑定角色</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">$ kubectl create serviceaccount --namespace kube-system tiller                               
+</span></span><span class="line"><span class="cl">serviceaccount <span class="s2">&#34;tiller&#34;</span> created
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">$ kubectl create clusterrolebinding tiller-cluster-rule --clusterrole<span class="o">=</span>cluster-admin --serviceaccount<span class="o">=</span>kube-system:tiller
+</span></span><span class="line"><span class="cl">clusterrolebinding.rbac.authorization.k8s.io <span class="s2">&#34;tiller-cluster-rule&#34;</span> created
+</span></span></code></pre></div><ul>
+<li>给 Tiller 的 deployments 添加刚才创建的 ServiceAccount</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># 给 Tiller 的 deployments 添加刚才创建的 ServiceAccount</span>
+</span></span><span class="line"><span class="cl">$ kubectl patch deploy --namespace kube-system tiller-deploy -p <span class="s1">&#39;{&#34;spec&#34;:{&#34;template&#34;:{&#34;spec&#34;:{&#34;serviceAccount&#34;:&#34;tiller&#34;}}}}&#39;</span>
+</span></span><span class="line"><span class="cl">deployment.extensions <span class="s2">&#34;tiller-deploy&#34;</span> patched
+</span></span></code></pre></div><ul>
+<li>查看 Tiller deployments 资源是否绑定 ServiceAccount</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">$ kubectl get deploy -n kube-system tiller-deploy -o yaml <span class="p">|</span> grep serviceAccount
+</span></span><span class="line"><span class="cl">serviceAccount: tiller
+</span></span><span class="line"><span class="cl">serviceAccountName: tiller
+</span></span></code></pre></div><ul>
+<li>查看 Tiller 是否安装成功</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">$ helm version 
+</span></span><span class="line"><span class="cl">Client: <span class="p">&amp;</span>version.Version<span class="o">{</span>SemVer:<span class="s2">&#34;v2.9.1&#34;</span>, GitCommit:<span class="s2">&#34;20adb27c7c5868466912eebdf6664e7390ebe710&#34;</span>, GitTreeState:<span class="s2">&#34;clean&#34;</span><span class="o">}</span>
+</span></span><span class="line"><span class="cl">Server: <span class="p">&amp;</span>version.Version<span class="o">{</span>SemVer:<span class="s2">&#34;v2.9.1&#34;</span>, GitCommit:<span class="s2">&#34;20adb27c7c5868466912eebdf6664e7390ebe710&#34;</span>, GitTreeState:<span class="s2">&#34;clean&#34;</span><span class="o">}</span>
+</span></span></code></pre></div><p>安装成功后，即可使用 helm install xxx 来安装 helm 应用。如果需要删除 Tiller，可以通过 kubectl delete deployment tiller-deploy &ndash;namespace kube-system  来删除 Tiller 的 deployment 或者使用 helm reset 来删除。</p>
+<h3 id="使用-helm-操作-chart">使用 Helm 操作 Chart</h3>
+<p>这一节将介绍如何使用 helm 来操作 chart，包括创建、删除、打包、安装等使用。</p>
+<p>先介绍一下 Helm 的核心命令：</p>
+<ul>
+<li>helm create 创建一个 Chart 模板</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">$ helm create <span class="nb">test</span>
+</span></span><span class="line"><span class="cl">Creating <span class="nb">test</span>
+</span></span></code></pre></div><ul>
+<li>helm package 打包一个 Chart 模板</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">$ helm package <span class="nb">test</span>                                                                          
+</span></span><span class="line"><span class="cl">Successfully packaged chart and saved it to: /root/test-0.1.0.tgz
+</span></span></code></pre></div><ul>
+<li>helm search 查找可用的 Chart 模板</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">$ helm search nginx                                  
+</span></span><span class="line"><span class="cl">NAME                   	CHART VERSION	APP VERSION	DESCRIPTION
+</span></span><span class="line"><span class="cl">stable/nginx-ingress   	0.9.5        	0.10.2     	An nginx Ingress controller that uses ConfigMap...
+</span></span><span class="line"><span class="cl">stable/nginx-lego      	0.3.1        	           	Chart <span class="k">for</span> nginx-ingress-controller and kube-lego
+</span></span><span class="line"><span class="cl">stable/gcloud-endpoints	0.1.0        	           	Develop, deploy, protect and monitor your APIs ...
+</span></span></code></pre></div><ul>
+<li>helm inspect 查看指定 Chart 的基本信息</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">appVersion</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;1.0&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">A Helm chart for Kubernetes</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">test</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="m">0.1.0</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="l">略...(省略一大段信息）</span><span class="w">
+</span></span></span></code></pre></div><ul>
+<li>helm install 根据指定的 Chart 部署一个 Release 到 Kubernetes 集群</li>
+</ul>
+<h3 id="chart-模板示例">Chart 模板示例</h3>
+<h4 id="chart-文件结构">Chart 文件结构</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">wordpress
+</span></span><span class="line"><span class="cl">├── charts
+</span></span><span class="line"><span class="cl">├── Chart.yaml
+</span></span><span class="line"><span class="cl">├── README.md
+</span></span><span class="line"><span class="cl">├── requirements.lock
+</span></span><span class="line"><span class="cl">├── requirements.yaml
+</span></span><span class="line"><span class="cl">├── templates
+</span></span><span class="line"><span class="cl">│   ├── deployment.yaml
+</span></span><span class="line"><span class="cl">│   ├── externaldb-secrets.yaml
+</span></span><span class="line"><span class="cl">│   ├── _helpers.tpl
+</span></span><span class="line"><span class="cl">│   ├── ingress.yaml
+</span></span><span class="line"><span class="cl">│   ├── NOTES.txt
+</span></span><span class="line"><span class="cl">│   ├── pvc.yaml
+</span></span><span class="line"><span class="cl">│   ├── secrets.yaml
+</span></span><span class="line"><span class="cl">│   ├── svc.yaml
+</span></span><span class="line"><span class="cl">│   └── tls-secrets.yaml
+</span></span><span class="line"><span class="cl">└── values.yaml
+</span></span></code></pre></div><p>一个 wordpress chart 如上（去除部分 test 和 charts 依赖）， 基本结构由以下几个部分组成：</p>
+<ul>
+<li>charts 存放子Chart (Subchart) 的定义，Subchart 指的是当前 Chart 依赖的 Chart ， 在 requirements.yaml 中定义</li>
+<li>Chart.yaml 包含 Chart 信息的 YAML 文件， 包括 Chart 的版本、名称等，在 DCE Helm 插件中还包含 Chart 的 <strong>团队授权</strong> 信息 和 <strong>是否公开</strong> 的信息</li>
+<li>README.md 可选：Chart 的介绍信息等（该文件对于一个大型 Chart 来说十分重要）</li>
+<li>Requirements.yaml 可选：列举当前 Chart 的需要依赖的 Chart</li>
+<li>templates
+<ul>
+<li>该目录下存放 Chart 所有的 K8s 资源定义模板，通常不同的资源放在不同的文件中，DCE Helm 插件中自定义模板的 K8s 资源统一放在 all_sources.yaml 文件中</li>
+<li>_helpers.tpl ， 通常这个文件存放可重用的模板片段，该文件中的定义可以在 Chart 其它资源定义模板中使用</li>
+<li>NOTES.txt，可选：一段简短使用说明的文本文件，用于安装 Release 后提示用户使用</li>
+</ul>
+</li>
+<li>values.yaml 当前 Chart 的默认配置的值</li>
+</ul>
+<h4 id="编写一个简单的-chart-示例">编写一个简单的 Chart 示例</h4>
+<p>本节以构建一个名称为 nginx-test Chart 为示例，来描述一个 chart 必要条件。
+1、Chart.yaml 文件是 一个 chart 必要文件， 该文件可以简单包括以下字段（具体字段请参考<a href="https://helm.sh/" target="_blank" rel="noopener noreffer ">Helm官网</a>)</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1  (chart 的API版本, 总是&#34;v1&#34;, 必要)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">hello     (chart 的名称, 必要)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="m">0.0.1</span><span class="w">  </span><span class="l">(chart 的版本，这个版本必须必要遵循 SemVer 2标准)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">A Helm chart for Kubernetes   (chart 模板的简介描述)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nn">...</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="l">下面省略一些字段，默认情况下有这几个字段定义就可以了</span><span class="w">
+</span></span></span></code></pre></div><p>2、values.yaml 文件是 chart 的必要文件，以 nginx 为示例：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># Default values for test.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># This is a YAML-formatted file.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># Declare variables to be passed into your templates.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">replicaCount</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">image</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">repository</span><span class="p">:</span><span class="w"> </span><span class="l">nginx</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="l">stable</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">pullPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">IfNotPresent</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">service</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">ClusterIP</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">ingress</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c"># kubernetes.io/ingress.class: nginx</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c"># kubernetes.io/tls-acme: &#34;true&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">chart-example.local</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">tls</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c">#  - secretName: chart-example-tls</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c">#    hosts:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c">#      - chart-example.local</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">resources</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># We usually recommend not to specify default resources and to leave this as a conscious</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># choice for the user. This also increases chances charts run on environments with little</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># resources, such as Minikube. If you do want to specify resources, uncomment the following</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># lines, adjust them as necessary, and remove the curly braces after &#39;resources:&#39;.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># limits:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c">#  cpu: 100m</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c">#  memory: 128Mi</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># requests:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c">#  cpu: 100m</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c">#  memory: 128Mi</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">nodeSelector</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">tolerations</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">affinity</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span></span></span></code></pre></div><p>从示例中可以看出，values.yaml 中定义了一些当前chart 的一些默认值，用于 templates 下的 K8s 资源 yaml 渲染时填充默认值。不过需要注意的是，如果使用 helm install 来部署一个 Release , 可以通过下面命令指定一份yaml 文件作为填充值：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ helm install --values<span class="o">=</span>myvals.yaml nginx
+</span></span></code></pre></div><p>3、创建 templates 下的模板文件， 用于生成 Kubernetes 资源清单(manifests) 如下所示:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="c"># nginx-test/templates/deployments.yaml </span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apps/v1beta2</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Deployment</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">template &#34;nginx-test.fullname&#34; . }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">template &#34;nginx-test.name&#34; . }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">chart</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">template &#34;nginx-test.chart&#34; . }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">release</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Release.Name }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">heritage</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Release.Service }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Values.replicaCount }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">template &#34;nginx-test.name&#34; . }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">release</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Release.Name }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">template &#34;nginx-test.name&#34; . }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">release</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Release.Name }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Chart.Name }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;{{ .Values.image.repository }}:{{ .Values.image.tag }}&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">imagePullPolicy</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Values.image.pullPolicy }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">livenessProbe</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">httpGet</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">readinessProbe</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">httpGet</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">resources</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{<span class="w"> </span><span class="l">toYaml .Values.resources | indent 12 }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>{{- <span class="l">with .Values.nodeSelector }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">nodeSelector</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{<span class="w"> </span><span class="l">toYaml . | indent 8 }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>{{- <span class="l">end }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>{{- <span class="l">with .Values.affinity }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">affinity</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{<span class="w"> </span><span class="l">toYaml . | indent 8 }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>{{- <span class="l">end }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>{{- <span class="l">with .Values.tolerations }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">tolerations</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{<span class="w"> </span><span class="l">toYaml . | indent 8 }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>{{- <span class="l">end }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># nginx-test/templates/service.yaml</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Service</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">template &#34;nginx-test.fullname&#34; . }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">template &#34;nginx-test.name&#34; . }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">chart</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">template &#34;nginx-test.chart&#34; . }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">release</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Release.Name }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">heritage</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Release.Service }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Values.service.type }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">port</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Values.service.port }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="l">http </span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">template &#34;nginx-test.name&#34; . }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">release</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">.Release.Name }}</span><span class="w">
+</span></span></span></code></pre></div><p>上面定义了 一个 deployments.yaml 和 service.yaml 资源文件，里面使用 {{ }} 符号的是 Go 模板语言的标准。其中可以通过：</p>
+<ul>
+<li>.Values 对象访问 values.yaml 文件的内容， 前面的dot(.) 表示从顶层命名空间开始，找到 Values 对象(下同)</li>
+<li>.Release、.Chart 开头的预定义值可用于任何的模板中</li>
+<li>.Chart 对象用来访问 Chart.yaml 文件的内容</li>
+<li>.Release 对象是 Helm的内置对象之一， 使用 Helm 安装一个 release 时，由 Tiller 分配 release 的名称</li>
+</ul>
+<p>4、命名模板(_helper.tpl) ：可以从上面看到有 {{ template &ldquo;nginx-test.fullname&rdquo; . }} 定义。该定义由 _helper.tpl 文件定义的字段来实现，比如下面一个 _helper.tpl :</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl">{{<span class="nt">/* vim: set filetype=mustache</span><span class="p">:</span><span class="w"> </span><span class="cp">*/}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{<span class="l">/*</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="l">Expand the name of the chart.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="cp">*/}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">define &#34;nginx-test.name&#34; -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix &#34;-&#34; -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">end -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{<span class="l">/*</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="l">Create a default fully qualified app name.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="l">We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="l">If release name contains chart name it will be used as a full name.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="cp">*/}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">define &#34;nginx-test.fullname&#34; -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">if .Values.fullnameOverride -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">.Values.fullnameOverride | trunc 63 | trimSuffix &#34;-&#34; -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">else -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">$name := default .Chart.Name .Values.nameOverride -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">if contains $name .Release.Name -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">.Release.Name | trunc 63 | trimSuffix &#34;-&#34; -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">else -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">printf &#34;%s-%s&#34; .Release.Name $name | trunc 63 | trimSuffix &#34;-&#34; -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">end -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">end -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">end -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{<span class="l">/*</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="l">Create chart name and version as used by the chart label.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="cp">*/}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">define &#34;nginx-test.chart&#34; -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">printf &#34;%s-%s&#34; .Chart.Name .Chart.Version | replace &#34;+&#34; &#34;_&#34; | trunc 63 | trimSuffix &#34;-&#34; -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">end -}}</span><span class="w">
+</span></span></span></code></pre></div><p>该模板定义了 &ldquo;nginx-test.name&rdquo;、&ldquo;nginx-test.fullname&rdquo;、&ldquo;nginx-test.chart&rdquo; 等可重用模板部分，当模板引擎读取该文件时，它存储对 nginx-test.name等的引用， 直到调用 template &ldquo;nginx-test.name&rdquo; 为止。然后把值渲染到模板中。</p>
+<p>注意 {{ template &ldquo;nginx-test.chart&rdquo; . }} 后面有个dot(.)，这是因为一个已命名的模板（用于创建 define) 被渲染时，它将接收由该 template 调用传入的范围（scope)。没有范围传入，在模板中无法访问任何内容，因此在：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl">{{- <span class="l">define &#34;nginx-test.chart&#34; -}}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="l">这里面的 .Chart 将无法访问，导致在模板中无法看到内容，因为这里值为空</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>{{- <span class="l">end -}}</span><span class="w">
+</span></span></span></code></pre></div><p>因此在模板中将 范围(scope) 传入即可正常使用：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="c"># nginx-test/templates/service.yaml</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Service</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span>{{<span class="w"> </span><span class="l">template &#34;nginx-test.fullname&#34; . }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="l">在末尾传递了 . 这样就可以使用 .Values 或者 .Chart 或其它范围(scope)</span><span class="w">
+</span></span></span></code></pre></div><p>5、Chart 依赖（requirements.yaml)：比如 WordPress Chart 依赖于 mariadb Chart， 下面是 WordPress 的依赖(requirements.yaml)：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">dependencies</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">mariadb</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="m">5.</span><span class="l">x.x</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">repository</span><span class="p">:</span><span class="w"> </span><span class="l">https://kubernetes-charts.storage.googleapis.com/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">condition</span><span class="p">:</span><span class="w"> </span><span class="l">mariadb.enabled</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">tags</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">wordpress-database</span><span class="w">
+</span></span></span></code></pre></div><p>该文件列举当前 Chart 所有的 依赖（subchart)。有几个字段是必要的：</p>
+<ul>
+<li>name: 依赖 Chart 的名称（必要）</li>
+<li>version: 依赖 Chart 的版本号（必要）</li>
+<li>repository: 依赖 Chart 的存储库完整URL，必须通过 helm repo add 添加 repository（存储库）到本地</li>
+</ul>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2024-05-08</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>,&nbsp;<a href="/tags/golang/">Golang</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/2024-05-09/" class="prev" rel="prev" title="Kubernetes HPA 浅入深出"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>Kubernetes HPA 浅入深出</a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.125.6">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://github.com/guoweikuang" target="_blank">guoweikuang</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":10},"comment":{}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

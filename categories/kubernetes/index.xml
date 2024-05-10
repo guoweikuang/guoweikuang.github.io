@@ -1,12 +1,10 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
-        <title>guoweikuang 技术博客</title>
-        <link>https://guoweikuang.github.io/</link>
-        <description>guoweikuang 技术博客</description>
+        <title>Kubernetes - Category - guoweikuang 技术博客</title>
+        <link>https://guoweikuang.github.io/categories/kubernetes/</link>
+        <description>Kubernetes - Category - guoweikuang 技术博客</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>guoweikuang2015@gmail.com (guoweikuang)</managingEditor>
-            <webMaster>guoweikuang2015@gmail.com (guoweikuang)</webMaster><lastBuildDate>Wed, 08 May 2024 12:03:30 &#43;0800</lastBuildDate>
-            <atom:link href="https://guoweikuang.github.io/index.xml" rel="self" type="application/rss+xml" />
-        <item>
+            <webMaster>guoweikuang2015@gmail.com (guoweikuang)</webMaster><lastBuildDate>Wed, 08 May 2024 12:03:30 &#43;0800</lastBuildDate><atom:link href="https://guoweikuang.github.io/categories/kubernetes/" rel="self" type="application/rss+xml" /><item>
     <title>Helm 从入门到实践</title>
     <link>https://guoweikuang.github.io/posts/helm/</link>
     <pubDate>Wed, 08 May 2024 12:03:30 &#43;0800</pubDate>
