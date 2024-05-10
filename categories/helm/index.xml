@@ -4,10 +4,10 @@
         <link>https://guoweikuang.github.io/categories/helm/</link>
         <description>Helm - Category - guoweikuang 技术博客</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>guoweikuang2015@gmail.com (guoweikuang)</managingEditor>
-            <webMaster>guoweikuang2015@gmail.com (guoweikuang)</webMaster><lastBuildDate>Wed, 08 May 2024 12:03:30 &#43;0800</lastBuildDate><atom:link href="https://guoweikuang.github.io/categories/helm/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>guoweikuang2015@gmail.com (guoweikuang)</webMaster><lastBuildDate>Sun, 04 Nov 2018 12:03:30 &#43;0800</lastBuildDate><atom:link href="https://guoweikuang.github.io/categories/helm/" rel="self" type="application/rss+xml" /><item>
     <title>Helm 从入门到实践</title>
     <link>https://guoweikuang.github.io/posts/helm/</link>
-    <pubDate>Wed, 08 May 2024 12:03:30 &#43;0800</pubDate>
+    <pubDate>Sun, 04 Nov 2018 12:03:30 &#43;0800</pubDate>
     <author>guoweikuang</author>
     <guid>https://guoweikuang.github.io/posts/helm/</guid>
     <description><![CDATA[Helm 是 Kubernetes 的软件包管理工具。本文需要读者对 Docker、Kubernetes 等相关知识有一定的了解。 本文将介绍 Helm 中的相关概念和基本工作原理，并通]]></description>

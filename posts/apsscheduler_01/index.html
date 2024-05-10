@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>Python定时任务之APScheduler源码分析（一） - guoweikuang 技术博客</title><meta name="Description" content=""><meta property="og:url" content="https://guoweikuang.github.io/posts/apsscheduler_01/">
+  <meta property="og:site_name" content="guoweikuang 技术博客">
+  <meta property="og:title" content="Python定时任务之APScheduler源码分析（一）">
+  <meta property="og:description" content="前言 前面有一篇文章简单介绍了Python的一些任务调度库，并描述了 APScheduler 的工作原理及架构，这里再回顾一下 APScheduler 的架构， 这次主要以 v2.1.0 版本为分析目标，因">
+  <meta property="og:locale" content="zh-CN">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-10-27T12:03:30+08:00">
+    <meta property="article:modified_time" content="2020-10-27T12:03:30+08:00">
+    <meta property="article:tag" content="Python">
+    <meta property="article:tag" content="定时任务">
+    <meta property="article:tag" content="源码分析">
+<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Python定时任务之APScheduler源码分析（一）">
+<meta name="twitter:description" content="前言 前面有一篇文章简单介绍了Python的一些任务调度库，并描述了 APScheduler 的工作原理及架构，这里再回顾一下 APScheduler 的架构， 这次主要以 v2.1.0 版本为分析目标，因">
+<meta name="application-name" content="guoweikuang 技术博客">
+<meta name="apple-mobile-web-app-title" content="guoweikuang 技术博客"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://guoweikuang.github.io/posts/apsscheduler_01/" /><link rel="prev" href="https://guoweikuang.github.io/posts/python_schduler_01/" /><link rel="next" href="https://guoweikuang.github.io/posts/hpa/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Python定时任务之APScheduler源码分析（一）",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/guoweikuang.github.io\/posts\/apsscheduler_01\/"
+        },"genre": "posts","keywords": "Python, 定时任务, 源码分析","wordcount":  4543 ,
+        "url": "https:\/\/guoweikuang.github.io\/posts\/apsscheduler_01\/","datePublished": "2020-10-27T12:03:30+08:00","dateModified": "2020-10-27T12:03:30+08:00","publisher": {
+            "@type": "Organization",
+            "name": "guoweikuang"},"author": {
+                "@type": "Person",
+                "name": "guoweikuang"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="" data-header-mobile=""><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : '' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="guoweikuang 技术博客">guoweikuang 技术博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="guoweikuang 技术博客">guoweikuang 技术博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">Python定时任务之APScheduler源码分析（一）</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://github.com/guoweikuang" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>guoweikuang</a></span>&nbsp;<span class="post-category">included in <a href="/categories/python/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>Python</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2020-10-27">2020-10-27</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;4543 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;10 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#前言">前言</a></li>
+    <li><a href="#apscheduler-的架构">APScheduler 的架构</a></li>
+    <li><a href="#apscheduler-代码结构">APScheduler 代码结构</a></li>
+    <li><a href="#官方示例">官方示例</a></li>
+    <li><a href="#scheduler-类">Scheduler 类</a></li>
+    <li><a href="#添加作业到调度器">添加作业到调度器</a>
+      <ul>
+        <li><a href="#intervaltrigger">IntervalTrigger</a></li>
+      </ul>
+    </li>
+    <li><a href="#start-函数">start 函数</a>
+      <ul>
+        <li><a href="#主循环-main_loop">主循环 main_loop</a></li>
+      </ul>
+    </li>
+    <li><a href="#未完待续">未完待续</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="前言">前言</h2>
+<p>前面有一篇文章简单介绍了Python的一些任务调度库，并描述了 APScheduler 的工作原理及架构，这里再回顾一下 APScheduler 的架构， 这次主要以 v2.1.0 版本为分析目标，因为 2.x 版本与 3.x 版本之间加了很多功能，如异步任务，代码也重构了不少，但是基本功能及概念没有变化</p>
+<h2 id="apscheduler-的架构">APScheduler 的架构</h2>
+<p><strong>1、APScheduler 基本概念</strong></p>
+<p>APScheduler 由四个组件构成（注：该部分翻译至官方文档）：</p>
+<ul>
+<li>
+<p>triggers 触发器</p>
+<p>触发器包含调度逻辑。每个作业（job）都有自己的触发器，用于确定下一个作业何时运行。除了最初的配置，触发器是完全无状态的</p>
+</li>
+<li>
+<p>job stores 作业存储</p>
+<p>job stores 是存放作业的地方，默认保存在内存中。作业数据序列化后保存至持久性数据库，从持久性数据库加载回来时会反序列化。作业存储(job stores)不将作业数据保存在内存中(默认存储除外)，相反，内存只是充当后端存储在保存、加载、更新、查找作业时的中间人角色。作业存储不能在调度器（schedulers) 之间共享</p>
+</li>
+<li>
+<p>executors 执行器</p>
+<p>执行器处理作业的运行。它们通常通过将作业中的指定可调用部分提交给线程或进程池来实现这一点。 当作业完成后，执行器通知调度器，然后调度器发出一个适当的事件</p>
+</li>
+<li>
+<p>schedulers 调度器</p>
+<p>调度器是将其余部分绑定在一起的工具。通常只有一个调度器(scheduler)在应用程序中运行。应用程序开发者通常不直接处理作业存储(job stores)、执行器(executors)或者触发器(triggers)。相反，调度器提供了适当的接口来处理它们。配置作业存储(job stores)和执行器(executors)是通过调度器(scheduler)来完成的,就像添加、修改和删除 job(作业)一样</p>
+</li>
+</ul>
+<p><strong>2、APScheduler 架构图</strong></p>
+<p><a href="https://imgse.com/i/pkZG1G4" target="_blank" rel="noopener noreffer "><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://s21.ax1x.com/2024/05/10/pkZG1G4.webp"
+        data-srcset="https://s21.ax1x.com/2024/05/10/pkZG1G4.webp, https://s21.ax1x.com/2024/05/10/pkZG1G4.webp 1.5x, https://s21.ax1x.com/2024/05/10/pkZG1G4.webp 2x"
+        data-sizes="auto"
+        alt="https://s21.ax1x.com/2024/05/10/pkZG1G4.webp"
+        title="papscheduler架构图" /></a></p>
+<h2 id="apscheduler-代码结构">APScheduler 代码结构</h2>
+<p>主要代码逻辑都是由下面的文件组成，可以看出代码结构也根据功能不同而归档， 例如作业存储模块及触发器模块都单独作为一个包管理，后面扩展其它作业存储或触发器也很容易管理，不会出现代码结构混乱，简单而言，代码层次分明</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="err">├──</span> <span class="n">apscheduler</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">├──</span> <span class="n">__init__</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">├──</span> <span class="n">events</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">├──</span> <span class="n">job</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">├──</span> <span class="n">jobstores</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">__init__</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">base</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">mongodb_store</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">ram_store</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">redis_store</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">shelve_store</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">└──</span> <span class="n">sqlalchemy_store</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">├──</span> <span class="n">scheduler</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">├──</span> <span class="n">threadpool</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">├──</span> <span class="n">triggers</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">__init__</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">cron</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">__init__</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">expressions</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">│</span>   <span class="err">└──</span> <span class="n">fields</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">├──</span> <span class="n">interval</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">│</span>   <span class="err">└──</span> <span class="n">simple</span><span class="p">.</span><span class="py">py</span>
+</span></span><span class="line"><span class="cl"><span class="err">│</span>   <span class="err">└──</span> <span class="n">util</span><span class="p">.</span><span class="py">py</span>
+</span></span></code></pre></div><h2 id="官方示例">官方示例</h2>
+<p>阅读源码，我一般第一步先阅读该库的官方文档，先了解这个功能是什么用途，怎么使用，然后查看相关的单元测试代码，这样更有助于理解里面某个模块或者某个类的用途及效果，最后以官方示例入手，一步一步深入到源码内部了解。那现在假设你已经阅读过官方文档，知道这个库的用途了，开始探索之旅吧!</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s2">设置一个每隔 3 秒就运行一次的任务
+</span></span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">apscheduler.scheduler</span> <span class="kn">import</span> <span class="n">Scheduler</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">tick</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Tick! The time is: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">standalone</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">scheduler</span><span class="o">.</span><span class="n">add_interval_job</span><span class="p">(</span><span class="n">tick</span><span class="p">,</span> <span class="n">seconds</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Press Ctrl+C to exit&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">try</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">scheduler</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="k">except</span> <span class="p">(</span><span class="ne">KeyboardInterrupt</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="k">pass</span>
+</span></span></code></pre></div><p>从示例代码看，第一步要实例化一下 Scheduler 类，这个类根据名称就可以猜出它的功能了，它对应着架构图里的调度器模块，后续添加任务调度、启动运行任务、触发任务执行，都要通过它来操作。仔细查看 Scheduler 实例化时还传了个 standalone 参数， 这个参数做什么用呢？接下来进入 Scheduler 类里面，查看它实例化时做了什么操作，看看 standalone 是什么作用</p>
+<h2 id="scheduler-类">Scheduler 类</h2>
+<p>可以看出 <code>__init__</code> 初始化时， 实例化了事件类（Event)，并获取了一些锁，主要是 configure 函数进行任务开始前的配置，</p>
+<p>可以看出实例化传的 standalone 参数是装载在 options 传递给 configure 进行配置使用</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Scheduler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;&#34;&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s2">    This class is responsible for scheduling jobs and triggering
+</span></span></span><span class="line"><span class="cl"><span class="s2">    their execution.
+</span></span></span><span class="line"><span class="cl"><span class="s2">    &#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">_stopped</span> <span class="o">=</span> <span class="kc">False</span>
+</span></span><span class="line"><span class="cl">    <span class="n">_thread</span> <span class="o">=</span> <span class="kc">None</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gconfig</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_wakeup</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_jobstores</span> <span class="o">=</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_jobstores_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span> <span class="o">=</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_listeners_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_jobs</span> <span class="o">=</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">gconfig</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+</span></span></code></pre></div><p>接下来看看 configure 做了什么工作, 可以看出，它的作用就是根据配置文件给调度器配置各种参数，值得注意的是，下面几个配置参数及其默认值， 参数配置的作用描述如下：</p>
+<table>
+<thead>
+<tr>
+<th>参数名称</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:left">解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>misfire_grace_time</td>
+<td style="text-align:right">1(s)</td>
+<td style="text-align:left">在允许作业执行被延迟之前的最长时间（以秒为单位），比如这个值设置了 30s, 一个任务设置了 10:00:00运行，但10:00:00 由于一些原因没有执行，错过了运行时间，但在 10:00:20 时调度器检查这个任务还在这个设置误差时间内，就可以继续执行，具体见<a href="https://apscheduler.readthedocs.io/en/v2.1.2/#coalescing" target="_blank" rel="noopener noreffer ">解释</a></td>
+</tr>
+<tr>
+<td>coalesce</td>
+<td style="text-align:right">True</td>
+<td style="text-align:left">将几个待执行的作业合并为一个，比如一个任务由于某个原因堆积了10次没有执行，该值为 True，只执行最后一次任务， 为 False 时，则测试执行 10次相同的任务，具体见<a href="https://apscheduler.readthedocs.io/en/v2.1.2/#coalescing" target="_blank" rel="noopener noreffer ">解释</a></td>
+</tr>
+<tr>
+<td>daemonic</td>
+<td style="text-align:right">True</td>
+<td style="text-align:left">控制调度器线程是否为守护程序。当standalone为True时，此选项无效。如果设置为 False, 当程序即将完成时必须显式关闭调度器， 否则调度器会阻止程序终止，设置为 True, 调度器自动随主程序的结束一起结束，但可能会在退出时引发异常</td>
+</tr>
+<tr>
+<td>standalone</td>
+<td style="text-align:right">False</td>
+<td style="text-align:left">设置为 True, start 函数会运行主循环，它将直接在调用线程中运行，并且将阻塞直到没有其他pending 状态的作业。 设置为False， 当调用start() 时， 将会生成自己的线程, 具体见<a href="https://apscheduler.readthedocs.io/en/v2.1.2/#modes" target="_blank" rel="noopener noreffer ">解释</a></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gconfig</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;&#34;&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s2">        Reconfigures the scheduler with the given options. Can only be done
+</span></span></span><span class="line"><span class="cl"><span class="s2">        when the scheduler isn&#39;t running.
+</span></span></span><span class="line"><span class="cl"><span class="s2">        &#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">      	<span class="c1"># 判断当前调度器是否运行状态，运行状态直接报错，因为这是配置调度器的全局配置，不允许运行期间动态修改配置</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">raise</span> <span class="n">SchedulerAlreadyRunningError</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Set general options（设置通用选项）</span>
+</span></span><span class="line"><span class="cl">        <span class="n">config</span> <span class="o">=</span> <span class="n">combine_opts</span><span class="p">(</span><span class="n">gconfig</span><span class="p">,</span> <span class="s1">&#39;apscheduler.&#39;</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 这几个参数都是存在默认值的，下面表格会详细解释参数作用</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">misfire_grace_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;misfire_grace_time&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">coalesce</span> <span class="o">=</span> <span class="n">asbool</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;coalesce&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">daemonic</span> <span class="o">=</span> <span class="n">asbool</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;daemonic&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">standalone</span> <span class="o">=</span> <span class="n">asbool</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;standalone&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Configure the thread pool（配置线程池, 这个线程池也就是queue 加锁实现的）</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="s1">&#39;threadpool&#39;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_threadpool</span> <span class="o">=</span> <span class="n">maybe_ref</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;threadpool&#39;</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">threadpool_opts</span> <span class="o">=</span> <span class="n">combine_opts</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;threadpool.&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_threadpool</span> <span class="o">=</span> <span class="n">ThreadPool</span><span class="p">(</span><span class="o">**</span><span class="n">threadpool_opts</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Configure job stores（配置作业存储）</span>
+</span></span><span class="line"><span class="cl">        <span class="n">jobstore_opts</span> <span class="o">=</span> <span class="n">combine_opts</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;jobstore.&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">jobstores</span> <span class="o">=</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">jobstore_opts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">            <span class="n">store_name</span><span class="p">,</span> <span class="n">option</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">opts_dict</span> <span class="o">=</span> <span class="n">jobstores</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">store_name</span><span class="p">,</span> <span class="p">{})</span>
+</span></span><span class="line"><span class="cl">            <span class="n">opts_dict</span><span class="p">[</span><span class="n">option</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">alias</span><span class="p">,</span> <span class="n">opts</span> <span class="ow">in</span> <span class="n">jobstores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">            <span class="n">classname</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;class&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">cls</span> <span class="o">=</span> <span class="n">maybe_ref</span><span class="p">(</span><span class="n">classname</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">jobstore</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">opts</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">add_jobstore</span><span class="p">(</span><span class="n">jobstore</span><span class="p">,</span> <span class="n">alias</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+</span></span></code></pre></div><p>configure 函数的作用已经很明显了，</p>
+<ul>
+<li>Scheduler 调度器的通用配置项，如 misfire_grace_time 等</li>
+<li>配置线程池</li>
+<li>配置作业存储并添加给 Scheduler, 本质上就是将添加到 _jobstores 字典里，并从各种作业存储中加载出所有的任务，最后发送作业存储添加的事件通知</li>
+</ul>
+<h2 id="添加作业到调度器">添加作业到调度器</h2>
+<p>从刚才的官方示例中，实例化完成调度器后，紧跟着就是使用 add_interval_job 为调度器添加一个任务作业，不同的任务使用不同的函数添加，比如这里是为了定时执行作业，使用了 add_interval_job 并设置了 3秒执行一次的策略。如果是指定某个日期执行的作业，那就使用 add_date_job 添加到调度器中。现在进入 add_interval_job ，看看这个函数做了什么</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">add_interval_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">weeks</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">days</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">hours</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minutes</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                         <span class="n">seconds</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                         <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;&#34;&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s2">				相关注释
+</span></span></span><span class="line"><span class="cl"><span class="s2">        &#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">      	<span class="c1"># 使用Python datetime.timedelta 函数包装相关的参数</span>
+</span></span><span class="line"><span class="cl">        <span class="n">interval</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">weeks</span><span class="o">=</span><span class="n">weeks</span><span class="p">,</span> <span class="n">days</span><span class="o">=</span><span class="n">days</span><span class="p">,</span> <span class="n">hours</span><span class="o">=</span><span class="n">hours</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                             <span class="n">minutes</span><span class="o">=</span><span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span><span class="o">=</span><span class="n">seconds</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 实例化一个触发器类，根据任务的不同，实例化不同触发器。然后通过 add_job 添加作业</span>
+</span></span><span class="line"><span class="cl">        <span class="n">trigger</span> <span class="o">=</span> <span class="n">IntervalTrigger</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">start_date</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_job</span><span class="p">(</span><span class="n">trigger</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+</span></span></code></pre></div><p>终于看到架构图中触发器模块的相关逻辑，在没看代码之前，大致可以猜到这个触发器只要负责根据用户设置的时间规则来计算出下次触发作业执行的时间。比如官方示例中 add_interval_job(tick, seconds=3), 用户设置了 seconds 为 3秒，这个触发器就负责根据当前时间计算出下次作业执行的时间，接下来看看触发器的初始化函数做了什么操作</p>
+<h3 id="intervaltrigger">IntervalTrigger</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">IntervalTrigger</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">      	<span class="c1"># interval 为上面 datetime.timedelta 对象，start_date 根据上面默认为 None</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;interval must be a timedelta&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 如果有 start_date，则先转换成 datetime 类型</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">start_date</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># convert_to_datetime 可以接收 datetime、date、字符串格式三种类型并转换</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># 为 datetime类型，这个通用方法使用正则表达式对字符串格式进行匹配，有点用</span>
+</span></span><span class="line"><span class="cl">            <span class="n">start_date</span> <span class="o">=</span> <span class="n">convert_to_datetime</span><span class="p">(</span><span class="n">start_date</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">interval</span> <span class="o">=</span> <span class="n">interval</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 将 timedelta 转换成秒数, 这里按照官方示例就是 3s 了</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">interval_length</span> <span class="o">=</span> <span class="n">timedelta_seconds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 如果没有设置任何的时间，那么默认就是 1秒执行一次作业</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">interval</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">interval_length</span> <span class="o">=</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">				
+</span></span><span class="line"><span class="cl">        <span class="c1"># 这里设置了作业的起始执行时间，根据当前时间 + 用户设置的时间点（如上面设置了3秒）后执行</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">start_date</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="o">=</span> <span class="n">convert_to_datetime</span><span class="p">(</span><span class="n">start_date</span><span class="p">)</span>
+</span></span></code></pre></div><p>接下来回到添加 Job 作业的地方（self.add_job)，这个将触发器实例化的对象及相关要执行的任务的函数及参数传入，在里面</p>
+<p>实例化了 Job 类，并根据 Scheduler 的运行情况 将 job 实例添加到 Scheduler 类的 _pending_jobs 等待队列中或者直接添加到 jobstore 中</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-Python" data-lang="Python"><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">add_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trigger</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">jobstore</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 这时候 misfire_grace_time、coalesce 两次参数才会有用途</span>
+</span></span><span class="line"><span class="cl">        <span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">trigger</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{},</span>
+</span></span><span class="line"><span class="cl">                  <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;misfire_grace_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">misfire_grace_time</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                  <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;coalesce&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coalesce</span><span class="p">),</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 如果 Scheduler 还没有运行，直接添加到 self._pending_jobs 队列，因为这时候 jobstore 还没实例化</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 也就无法直接添加到 jobstore 中</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_pending_jobs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">job</span><span class="p">,</span> <span class="n">jobstore</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Adding job tentatively -- it will be properly &#39;</span>
+</span></span><span class="line"><span class="cl">                        <span class="s1">&#39;scheduled when the scheduler starts&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 添加 job 到 jobstore 中</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_real_add_job</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">jobstore</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">job</span>
+</span></span></code></pre></div><p>这里做个小总结，可以看出 Scheduler 联系起所有的模块，包括触发器模块的实例化、作业存储的相关配置、Job类的实例化，所有子模块的初始化都委托给 Scheduler 执行（这才对得起这个命名吧），并且都是通过 add_interval_job、add_job 这种简而易懂的方式来将任务的所有环节串联起来，值得思考并应用。</p>
+<p>接着进入 _real_add_job 看看做了什么操作</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">_real_add_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">jobstore</span><span class="p">,</span> <span class="n">wakeup</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 计算下一次运行时间，实际上调用了 Trigger(触发器提供的计算下一次时间)的get_next_fire_time 计算</span>
+</span></span><span class="line"><span class="cl">        <span class="n">job</span><span class="o">.</span><span class="n">compute_next_run_time</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">next_run_time</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Not adding job since it would never be run&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_jobstores_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="k">try</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">try</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">                <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobstores</span><span class="p">[</span><span class="n">jobstore</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;No such job store: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">jobstore</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># 把执行任务添加到存储中</span>
+</span></span><span class="line"><span class="cl">            <span class="n">store</span><span class="o">.</span><span class="n">add_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">finally</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_jobstores_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Notify listeners that a new job has been added，（新增任务事件发送）</span>
+</span></span><span class="line"><span class="cl">        <span class="n">event</span> <span class="o">=</span> <span class="n">JobStoreEvent</span><span class="p">(</span><span class="n">EVENT_JOBSTORE_JOB_ADDED</span><span class="p">,</span> <span class="n">jobstore</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_notify_listeners</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Added job &#34;</span><span class="si">%s</span><span class="s1">&#34; to job store &#34;</span><span class="si">%s</span><span class="s1">&#34;&#39;</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">jobstore</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Notify the scheduler about the new job, 这个很关键，用Python的事件机制来唤醒scheduler(下面会详细解释)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">wakeup</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_wakeup</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">            
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">IntervalTrigger</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">				<span class="s2">&#34;&#34;&#34;省略，具体见上面&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">get_next_fire_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_date</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># start_date 当前时间， self.start_date 任务启动的时间点（初始化IntervalTrigger类的时间）</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">start_date</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">timediff_seconds</span> <span class="o">=</span> <span class="n">timedelta_seconds</span><span class="p">(</span><span class="n">start_date</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">next_interval_num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="n">timediff_seconds</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_length</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval</span> <span class="o">*</span> <span class="n">next_interval_num</span>        
+</span></span></code></pre></div><h2 id="start-函数">start 函数</h2>
+<p>前面分析了这么多，其实我们只跑了下面这两行代码的相关逻辑，也就是通过 Scheduler 来构建作业，并设置全局配置包括作业存储的配置、触发器相关信息、最小的执行单元 Job 等操作, 这时候任务还没有真正执行起来，想要执行作业任务，还得运行 Scheduler 的 start 来启用调度器</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl">    <span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">standalone</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">scheduler</span><span class="o">.</span><span class="n">add_interval_job</span><span class="p">(</span><span class="n">tick</span><span class="p">,</span> <span class="n">seconds</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</span></span></code></pre></div><p>下面我们就深入 start 函数，了解这个函数是如何开始任务的调度的</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;&#34;&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s2">        (在一个新的线程中开启一个调度器)
+</span></span></span><span class="line"><span class="cl"><span class="s2">        Starts the scheduler in a new thread.
+</span></span></span><span class="line"><span class="cl"><span class="s2">				线程模式， 在 scheduler 线程启动后立即返回
+</span></span></span><span class="line"><span class="cl"><span class="s2">        In threaded mode (the default), this method will return immediately
+</span></span></span><span class="line"><span class="cl"><span class="s2">        after starting the scheduler thread.
+</span></span></span><span class="line"><span class="cl"><span class="s2">        标准模式， 这个函数会阻塞直到没有需要调度的作业
+</span></span></span><span class="line"><span class="cl"><span class="s2">        In standalone mode, this method will block until there are no more
+</span></span></span><span class="line"><span class="cl"><span class="s2">        scheduled jobs.
+</span></span></span><span class="line"><span class="cl"><span class="s2">        &#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">raise</span> <span class="n">SchedulerAlreadyRunningError</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Create a RAMJobStore as the default if there is no default job store</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 这个地方在没有配置任何的作用存储情况下，默认使用的内存存储</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;default&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobstores</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">add_jobstore</span><span class="p">(</span><span class="n">RAMJobStore</span><span class="p">(),</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Schedule all pending jobs</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 将所有的作业添加到作业存储中</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">job</span><span class="p">,</span> <span class="n">jobstore</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending_jobs</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># 上面已经解释过这个函数</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_real_add_job</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">jobstore</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending_jobs</span><span class="p">[:]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_stopped</span> <span class="o">=</span> <span class="kc">False</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">standalone</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_main_loop</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_main_loop</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;APScheduler&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">daemonic</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</span></span></code></pre></div><p>从上面代码来来，start 函数根据 standalone 的配置不同启用不同的模式来运行。</p>
+<ul>
+<li>
+<p>使用 standalone 模式，则调用 _main_loop 函数运行一个死循环，直到调用 shutdown 函数关闭</p>
+</li>
+<li>
+<p>线程模式则是启用一个后台守护线程进行任务的执行，如果上面示例的 standalone 设置为 False，daemonic 默认情况下为 True，这时候就会设置线程为守护线程</p>
+<p>当程序中所有的非守护线程都完成执行时，任何剩余的守护线程将在 Python程序退出时被放弃，因此示例中的任务也就没有运行就已经结束，看不到任何的输出</p>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># 设置为线程模式</span>
+</span></span><span class="line"><span class="cl">    <span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">standalone</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">scheduler</span><span class="o">.</span><span class="n">add_interval_job</span><span class="p">(</span><span class="n">tick</span><span class="p">,</span> <span class="n">seconds</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Press Ctrl+C to exit&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">try</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">scheduler</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="k">except</span> <span class="p">(</span><span class="ne">KeyboardInterrupt</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="k">pass</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># 加这一步让主程序（也就是所谓的非守护线程一直运行中)</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">import</span> <span class="nn">time</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">      <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 运行输出结果：主程序运行完成后直接退出</span>
+</span></span><span class="line"><span class="cl"><span class="n">Press</span> <span class="n">Ctrl</span><span class="o">+</span><span class="n">C</span> <span class="n">to</span> <span class="n">exit</span>
+</span></span></code></pre></div><h3 id="主循环-main_loop">主循环 main_loop</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">_main_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;&#34;&#34;Executes jobs on schedule.&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Scheduler started&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 事件通知 Scheduler 启用</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_notify_listeners</span><span class="p">(</span><span class="n">SchedulerEvent</span><span class="p">(</span><span class="n">EVENT_SCHEDULER_START</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">				<span class="c1"># 清理 threading.Event 的设置</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_wakeup</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stopped</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Looking for jobs to run&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># 获取下一次醒来的时间</span>
+</span></span><span class="line"><span class="cl">            <span class="n">next_wakeup_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_jobs</span><span class="p">(</span><span class="n">now</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">            <span class="c1"># Sleep until the next job is scheduled to be run,</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># a new job is added or the scheduler is stopped</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="n">next_wakeup_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">                <span class="c1"># 计算等待时间，时间不到就一直阻塞着</span>
+</span></span><span class="line"><span class="cl">                <span class="n">wait_seconds</span> <span class="o">=</span> <span class="n">time_difference</span><span class="p">(</span><span class="n">next_wakeup_time</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Next wakeup is due at </span><span class="si">%s</span><span class="s1"> (in </span><span class="si">%f</span><span class="s1"> seconds)&#39;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                             <span class="n">next_wakeup_time</span><span class="p">,</span> <span class="n">wait_seconds</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="c1"># 通过 threading.Event 的 wait 设置线程等待 wait_seconds 长时间</span>
+</span></span><span class="line"><span class="cl">                <span class="bp">self</span><span class="o">.</span><span class="n">_wakeup</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">wait_seconds</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="c1"># 将标志设置为 False</span>
+</span></span><span class="line"><span class="cl">                <span class="bp">self</span><span class="o">.</span><span class="n">_wakeup</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">standalone</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;No jobs left; shutting down scheduler&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">                <span class="k">break</span>
+</span></span><span class="line"><span class="cl">            <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;No jobs; waiting until a job is added&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="bp">self</span><span class="o">.</span><span class="n">_wakeup</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">                <span class="bp">self</span><span class="o">.</span><span class="n">_wakeup</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Scheduler has been shut down&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">_notify_listeners</span><span class="p">(</span><span class="n">SchedulerEvent</span><span class="p">(</span><span class="n">EVENT_SCHEDULER_SHUTDOWN</span><span class="p">))</span>
+</span></span></code></pre></div><p>主线程本质上是一个死循环，不断获取作业任务，并获取作业的下一次执行时间，然后使用 Python threading.Event 模块让线程阻塞一段时间（一次循环结束之前会计算任务下次执行事件与当前时间之差），这样就不用在死循环中不断从 jobstore 存储中取出任务，然后计算执行时间，这样会浪费 Scheduler 的资源，也加重了 jobstore 取作业的负担。</p>
+<p>现在来回顾一下Python threading Event 模块的官方描述：</p>
+<p><a href="https://imgse.com/i/pkZGyQA" target="_blank" rel="noopener noreffer "><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://s21.ax1x.com/2024/05/10/pkZGyQA.webp"
+        data-srcset="https://s21.ax1x.com/2024/05/10/pkZGyQA.webp, https://s21.ax1x.com/2024/05/10/pkZGyQA.webp 1.5x, https://s21.ax1x.com/2024/05/10/pkZGyQA.webp 2x"
+        data-sizes="auto"
+        alt="https://s21.ax1x.com/2024/05/10/pkZGyQA.webp"
+        title="pkZGyQA.webp" /></a></p>
+<h2 id="未完待续">未完待续</h2>
+<p>下一篇接着分析 Event 的具体使用及后续代码</p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2020-10-27</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/python/">Python</a>,&nbsp;<a href="/tags/%E5%AE%9A%E6%97%B6%E4%BB%BB%E5%8A%A1/">定时任务</a>,&nbsp;<a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/python_schduler_01/" class="prev" rel="prev" title="Python 定时任务最佳实践"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>Python 定时任务最佳实践</a>
+            <a href="/posts/hpa/" class="next" rel="next" title="Kubernetes HPA 浅入深出">Kubernetes HPA 浅入深出<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.125.6">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://github.com/guoweikuang" target="_blank">guoweikuang</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":10},"comment":{}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>
