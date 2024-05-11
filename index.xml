@@ -15,6 +15,14 @@
     <description><![CDATA[HPA 是 Kubernetes 提供了一个弹性伸缩的重要功能，简单来说就是支持在应用资源消耗量很大的情况下，根据用户配置的阈值来自动进行扩容，减少人工的介入；在应用资]]></description>
 </item>
 <item>
+    <title>Kubernetes 最简实践</title>
+    <link>https://guoweikuang.github.io/posts/kubernetes_simple/</link>
+    <pubDate>Mon, 02 Aug 2021 12:03:30 &#43;0800</pubDate>
+    <author>guoweikuang</author>
+    <guid>https://guoweikuang.github.io/posts/kubernetes_simple/</guid>
+    <description><![CDATA[什么是 Kubernetes Kubernetes是用于管理容器化应用程序集群的工具，自动且持续地监视集群并对其组成进行调整。官方的描述：Kubernetes 是一]]></description>
+</item>
+<item>
     <title>Python定时任务之APScheduler源码分析（一）</title>
     <link>https://guoweikuang.github.io/posts/apsscheduler_01/</link>
     <pubDate>Tue, 27 Oct 2020 12:03:30 &#43;0800</pubDate>

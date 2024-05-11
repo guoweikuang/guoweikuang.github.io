@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>Kubernetes 最简实践 - guoweikuang 技术博客</title><meta name="Description" content=""><meta property="og:url" content="https://guoweikuang.github.io/posts/kubernetes_simple/">
+  <meta property="og:site_name" content="guoweikuang 技术博客">
+  <meta property="og:title" content="Kubernetes 最简实践">
+  <meta property="og:description" content="什么是 Kubernetes Kubernetes是用于管理容器化应用程序集群的工具，自动且持续地监视集群并对其组成进行调整。官方的描述：Kubernetes 是一">
+  <meta property="og:locale" content="zh-CN">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2021-08-02T12:03:30+08:00">
+    <meta property="article:modified_time" content="2021-08-02T12:03:30+08:00">
+    <meta property="article:tag" content="云原生">
+    <meta property="article:tag" content="Kubernetes">
+<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Kubernetes 最简实践">
+<meta name="twitter:description" content="什么是 Kubernetes Kubernetes是用于管理容器化应用程序集群的工具，自动且持续地监视集群并对其组成进行调整。官方的描述：Kubernetes 是一">
+<meta name="application-name" content="guoweikuang 技术博客">
+<meta name="apple-mobile-web-app-title" content="guoweikuang 技术博客"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://guoweikuang.github.io/posts/kubernetes_simple/" /><link rel="prev" href="https://guoweikuang.github.io/posts/apsscheduler_01/" /><link rel="next" href="https://guoweikuang.github.io/posts/hpa/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Kubernetes 最简实践",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/guoweikuang.github.io\/posts\/kubernetes_simple\/"
+        },"genre": "posts","keywords": "云原生, Kubernetes","wordcount":  5640 ,
+        "url": "https:\/\/guoweikuang.github.io\/posts\/kubernetes_simple\/","datePublished": "2021-08-02T12:03:30+08:00","dateModified": "2021-08-02T12:03:30+08:00","publisher": {
+            "@type": "Organization",
+            "name": "guoweikuang"},"author": {
+                "@type": "Person",
+                "name": "guoweikuang"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="" data-header-mobile=""><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : '' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="guoweikuang 技术博客">guoweikuang 技术博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="guoweikuang 技术博客">guoweikuang 技术博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">Kubernetes 最简实践</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://github.com/guoweikuang" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>guoweikuang</a></span>&nbsp;<span class="post-category">included in <a href="/categories/kubernetes/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>Kubernetes</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2021-08-02">2021-08-02</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;5640 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;12 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#什么是-kubernetes">什么是 Kubernetes</a></li>
+    <li><a href="#kubernetes-架构">Kubernetes 架构</a></li>
+    <li><a href="#kubernetes-资源对象">Kubernetes 资源对象</a>
+      <ul>
+        <li><a href="#kubernetes-核心对象概念">Kubernetes 核心对象概念</a></li>
+        <li><a href="#deployment-yaml例子">Deployment yaml例子</a></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-常见命令">Kubernetes 常见命令</a></li>
+    <li><a href="#kubernetes-排障">Kubernetes 排障</a>
+      <ul>
+        <li><a href="#服务跑不起来怎么办">服务跑不起来怎么办？</a></li>
+        <li><a href="#service-无法访问">Service 无法访问？</a></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-负载均衡">Kubernetes 负载均衡</a></li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="什么是-kubernetes">什么是 Kubernetes</h2>
+<hr>
+<p>Kubernetes是用于管理容器化应用程序集群的工具，自动且持续地监视集群并对其组成进行调整。官方的描述：Kubernetes 是一个可移植的、可扩展的开源平台，用于管理容器化的工作负载和服务，可促进声明式配置和自动化。</p>
+<p>下面图片说明了当前部署架构的变迁，也是为什么要把服务部署在容器，管理在k8s的原因
+<a href="https://imgse.com/i/pkZTW7R" target="_blank" rel="noopener noreffer "><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://s21.ax1x.com/2024/05/11/pkZTW7R.png"
+        data-srcset="https://s21.ax1x.com/2024/05/11/pkZTW7R.png, https://s21.ax1x.com/2024/05/11/pkZTW7R.png 1.5x, https://s21.ax1x.com/2024/05/11/pkZTW7R.png 2x"
+        data-sizes="auto"
+        alt="https://s21.ax1x.com/2024/05/11/pkZTW7R.png"
+        title="pkZTW7R.png" /></a></p>
+<h2 id="kubernetes-架构">Kubernetes 架构</h2>
+<hr>
+<p>Kubernetes 主要分两种角色的节点，一种是master节点，一种是 worker 节点。master节点中主要运行四个很关键的组件，分别是 API Server、etcd、kube-controller、kube-scheduler， worker节点主要运行 kubelet、docker、kube-proxy等三个主要的组件</p>
+<p><a href="https://imgse.com/i/pkZThA1" target="_blank" rel="noopener noreffer "><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://s21.ax1x.com/2024/05/11/pkZThA1.png"
+        data-srcset="https://s21.ax1x.com/2024/05/11/pkZThA1.png, https://s21.ax1x.com/2024/05/11/pkZThA1.png 1.5x, https://s21.ax1x.com/2024/05/11/pkZThA1.png 2x"
+        data-sizes="auto"
+        alt="https://s21.ax1x.com/2024/05/11/pkZThA1.png"
+        title="pkZThA1.png" /></a></p>
+<h2 id="kubernetes-资源对象">Kubernetes 资源对象</h2>
+<hr>
+<p>在 Kubernetes 系统中，Kubernetes 对象 是持久化的实体。 Kubernetes 使用这些实体去表示整个集群的状态。特别地，它们描述了如下信息：
+- 哪些容器化应用在运行（以及在哪些节点上）
+- 可以被应用使用的资源
+- 关于应用运行时表现的策略，比如重启策略、升级策略，以及容错策略</p>
+<h3 id="kubernetes-核心对象概念">Kubernetes 核心对象概念</h3>
+<ul>
+<li><strong>工作负载(Deployment)</strong></li>
+</ul>
+<p>用来管理你的集群上的无状态应用，为 Pods 和 ReplicaSets 提供声明式的更新能力。你负责描述 Deployment 中的 目标状态，而 Deployment 控制器（Controller） 以受控速率更改实际状态， 使其变为期望状态。</p>
+<ul>
+<li><strong>副本集（Replica Set，RS）</strong></li>
+</ul>
+<p>ReplicaSet 的目的是维护一组在任何时候都处于运行状态的 Pod 副本的稳定集合。 因此，它通常用来保证给定数量的、完全相同的 Pod 的可用性。</p>
+<ul>
+<li><strong>服务（Service）</strong></li>
+</ul>
+<p>将运行在一组 Pods 上的应用程序公开为网络服务的抽象方法。Service 资源允许你对外暴露 Pods 中运行的应用程序，以支持来自于集群外部的访问。可以使用 Services 来发布仅供集群内部使用的服务。</p>
+<ul>
+<li><strong>后台支撑服务集（DaemonSet）</strong></li>
+</ul>
+<p>DaemonSet 确保全部（或者某些）节点上运行一个 Pod 的副本。 当有节点加入集群时， 也会为他们新增一个 Pod 。 当有节点从集群移除时，这些 Pod 也会被回收
+DaemonSet 的一些典型用法：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">在每个节点上运行集群守护进程
+</span></span><span class="line"><span class="cl">在每个节点上运行日志收集守护进程
+</span></span><span class="line"><span class="cl">在每个节点上运行监控守护进程
+</span></span></code></pre></div><ul>
+<li><strong>持久存储卷（Persistent Volume，PV）和持久存储卷声明（Persistent Volume Claim，PVC）</strong></li>
+</ul>
+<p>持久卷（PersistentVolume，PV）是集群中的一块存储，可以由管理员事先供应，或者 使用存储类（Storage Class）来动态供应。</p>
+<p>持久卷申领（PersistentVolumeClaim，PVC）表达的是用户对存储的请求。概念上与 Pod 类似。 Pod 会耗用节点资源，而 PVC 申领会耗用 PV 资源。Pod 可以请求特定数量的资源（CPU 和内存）</p>
+<ul>
+<li><strong>密钥对象（Secret）及 ConfigMap</strong></li>
+</ul>
+<p>Secret 对象类型用来保存敏感信息，例如密码、OAuth 令牌和 SSH 密钥。将这些信息放在 secret 中比放在 Pod 的定义或者 容器镜像 中来说更加安全和灵活。</p>
+<p>ConfigMap 是一种 API 对象，用来将非机密性的数据保存到键值对中。ConfigMap 将您的环境配置信息和 容器镜像 解耦，便于应用配置的修改。</p>
+<ul>
+<li><strong>服务帐户（Service Account）</strong></li>
+</ul>
+<p>服务账户为 Pod 中运行的进程提供了一个标识。当你创建 Pod 时，如果没有指定服务账户，Pod 会被指定给命名空间中的 default 服务账户</p>
+<ul>
+<li><strong>名字空间（Namespace）</strong></li>
+</ul>
+<p>名字空间适用于存在很多跨多个团队或项目的用户的场景。对于只有几到几十个用户的集群，根本不需要创建或考虑名字空间。当需要名称空间提供的功能时，请开始使用它们。</p>
+<h3 id="deployment-yaml例子">Deployment yaml例子</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="c"># kubectl apply -f xxx.yaml 来更新或者部署deployment   </span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># yaml格式的pod定义文件完整内容：</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1                     </span><span class="w"> </span><span class="c"># 必选，版本号，例如v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Pod       　　　　　　         </span><span class="w"> </span><span class="c"># 必选，Pod</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">       　　　　　　          </span><span class="c"># 必选，元数据</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string                     </span><span class="w"> </span><span class="c"># 必选，Pod名称</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">string                </span><span class="w"> </span><span class="c"># 必选，Pod所属的命名空间</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">       　　　　　　          </span><span class="c"># 自定义标签</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string                 </span><span class="w"> </span><span class="c"># 自定义标签名字</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span><span class="w">                      </span><span class="c"># 自定义注释列表</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">                               </span><span class="c"># 必选，Pod中容器的详细定义</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">containers</span><span class="p">:</span><span class="w">                       </span><span class="c"># 必选，Pod中容器列表</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string                   </span><span class="w"> </span><span class="c"># 必选，容器名称</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">string                  </span><span class="w"> </span><span class="c"># 必选，容器的镜像名称</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">imagePullPolicy</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">Always | Never | IfNotPresent] </span><span class="w"> </span><span class="c"># 获取镜像的策略 Alawys表示下载镜像 IfnotPresent表示优先使用本地镜像，否则下载镜像，Nerver表示仅使用本地镜像</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">string]              </span><span class="w"> </span><span class="c"># 容器的启动命令列表，如不指定，使用打包时使用的启动命令</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">string]                 </span><span class="w"> </span><span class="c"># 容器的启动命令参数列表</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">workingDir</span><span class="p">:</span><span class="w"> </span><span class="l">string             </span><span class="w"> </span><span class="c"># 容器的工作目录</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">volumeMounts</span><span class="p">:</span><span class="w">                   </span><span class="c"># 挂载到容器内部的存储卷配置</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string                 </span><span class="w"> </span><span class="c"># 引用pod定义的共享存储卷的名称，需用volumes[]部分定义的的卷名</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">string            </span><span class="w"> </span><span class="c"># 存储卷在容器内mount的绝对路径，应少于512字符</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">readOnly</span><span class="p">:</span><span class="w"> </span><span class="l">boolean            </span><span class="w"> </span><span class="c"># 是否为只读模式</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w">                          </span><span class="c"># 需要暴露的端口库号列表</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string                 </span><span class="w"> </span><span class="c"># 端口号名称</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="l">int           </span><span class="w"> </span><span class="c"># 容器需要监听的端口号</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">hostPort</span><span class="p">:</span><span class="w"> </span><span class="l">int                </span><span class="w"> </span><span class="c"># 容器所在主机需要监听的端口号，默认与Container相同</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">string             </span><span class="w"> </span><span class="c"># 端口协议，支持TCP和UDP，默认TCP</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">env</span><span class="p">:</span><span class="w">                            </span><span class="c"># 容器运行前需设置的环境变量列表</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string                 </span><span class="w"> </span><span class="c"># 环境变量名称</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">string                </span><span class="w"> </span><span class="c"># 环境变量的值</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">resources</span><span class="p">:</span><span class="w">                      </span><span class="c"># 资源限制和请求的设置</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">limits</span><span class="p">:</span><span class="w">                       </span><span class="c"># 资源限制的设置</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="l">string                </span><span class="w"> </span><span class="c"># Cpu的限制，单位为core数，将用于docker run --cpu-shares参数</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">string             </span><span class="w"> </span><span class="c"># 内存限制，单位可以为Mib/Gib，将用于docker run --memory参数</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">requests</span><span class="p">:</span><span class="w">                     </span><span class="c"># 资源请求的设置</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="l">string                </span><span class="w"> </span><span class="c"># Cpu请求，容器启动的初始可用数量</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">string             </span><span class="w"> </span><span class="c"># 内存清楚，容器启动的初始可用数量</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">livenessProbe</span><span class="p">:</span><span class="w">                  </span><span class="c"># 对Pod内个容器健康检查的设置，当探测无响应几次后将自动重启该容器，检查方法有exec、httpGet和tcpSocket，对一个容器只需设置其中一种方法即可</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">exec</span><span class="p">:</span><span class="w">                         </span><span class="c"># 对Pod容器内检查方式设置为exec方式</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">string]          </span><span class="w"> </span><span class="c"># exec方式需要制定的命令或脚本</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">httpGet</span><span class="p">:</span><span class="w">                      </span><span class="c"># 对Pod内个容器健康检查方法设置为HttpGet，需要制定Path、port</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l">number</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">HttpHeaders</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">tcpSocket</span><span class="p">:</span><span class="w">                    </span><span class="c"># 对Pod内个容器健康检查方式设置为tcpSocket方式</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">         </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l">number</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">       </span><span class="nt">initialDelaySeconds</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="w">       </span><span class="c"># 容器启动完成后首次探测的时间，单位为秒</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">       </span><span class="nt">timeoutSeconds</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="w">            </span><span class="c"># 对容器健康检查探测等待响应的超时时间，单位秒，默认1秒</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">       </span><span class="nt">periodSeconds</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="w">             </span><span class="c"># 对容器监控检查的定期探测时间设置，单位秒，默认10秒一次</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">       </span><span class="nt">successThreshold</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">       </span><span class="nt">failureThreshold</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">       </span><span class="nt">securityContext</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">         </span><span class="nt">privileged</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">restartPolicy</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">Always | Never | OnFailure]</span><span class="w"> </span><span class="c"># Pod的重启策略，Always表示一旦不管以何种方式终止运行，kubelet都将重启，OnFailure表示只有Pod以非0退出码退出才重启，Nerver表示不再重启该Pod</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">nodeSelector</span><span class="p">:</span><span class="w"> </span><span class="l">obeject          </span><span class="w"> </span><span class="c"># 设置NodeSelector表示将该Pod调度到包含这个label的node上，以key：value的格式指定</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">imagePullSecrets</span><span class="p">:</span><span class="w">               </span><span class="c"># Pull镜像时使用的secret名称，以key：secretkey格式指定</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">hostNetwork</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">              </span><span class="c"># 是否使用主机网络模式，默认为false，如果设置为true，表示使用宿主机网络</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w">                        </span><span class="c"># 在该pod上定义共享存储卷列表</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string                 </span><span class="w"> </span><span class="c"># 共享存储卷名称 （volumes类型有很多种）</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">emptyDir</span><span class="p">:</span><span class="w"> </span>{}<span class="w">                  </span><span class="c"># 类型为emtyDir的存储卷，与Pod同生命周期的一个临时目录。为空值</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">hostPath</span><span class="p">:</span><span class="w"> </span><span class="l">string             </span><span class="w"> </span><span class="c"># 类型为hostPath的存储卷，表示挂载Pod所在宿主机的目录</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">string               </span><span class="w"> </span><span class="c"># Pod所在宿主机的目录，将被用于同期中mount的目录</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">secret</span><span class="p">:</span><span class="w">                       </span><span class="c"># 类型为secret的存储卷，挂载集群与定义的secre对象到容器内部</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">scretname</span><span class="p">:</span><span class="w"> </span><span class="l">string  </span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">items</span><span class="p">:</span><span class="w">     
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">configMap</span><span class="p">:</span><span class="w">                    </span><span class="c"># 类型为configMap的存储卷，挂载预定义的configMap对象到容器内部</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">items</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span></code></pre></div><h2 id="kubernetes-常见命令">Kubernetes 常见命令</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># 详细命令可看官方文档，或者：https://hardocs.com/d/kubernetes/136-Command%20Reference.html、https://juejin.cn/post/6844904008436416519</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 查看k8s集群状态</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl cluster-info
+</span></span><span class="line"><span class="cl">Kubernetes control plane is running at https://kubernetes.docker.internal:6443
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 查看k8s节点</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get nodes
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 查看命名空间</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get namespaces
+</span></span><span class="line"><span class="cl">NAME                   STATUS   AGE
+</span></span><span class="line"><span class="cl">default                Active   7d5h
+</span></span><span class="line"><span class="cl">kube-node-lease        Active   7d5h
+</span></span><span class="line"><span class="cl">kube-public            Active   7d5h
+</span></span><span class="line"><span class="cl">kube-system            Active   7d5h
+</span></span><span class="line"><span class="cl">kubernetes-dashboard   Active   3m50s
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 查看某个命名空间的所有pod, -o 表示查看pod的更具体信息，如pod ip 或者 node</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get pods -n &lt;namespace&gt; -o wide
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 查看pod的所有标签</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get pod --show-labels
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 查看 pod 的 yaml 配置</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get pod &lt;podname&gt; -o yaml
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 如何查看一个 deployment 多个pod的日志？ -l 表示指定的标签</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl logs -l <span class="nv">app</span><span class="o">=</span>nginx
+</span></span><span class="line"><span class="cl">      <span class="c1"># Usage:</span>
+</span></span><span class="line"><span class="cl">        kubectl logs <span class="o">[</span>-f<span class="o">]</span> <span class="o">[</span>-p<span class="o">]</span> <span class="o">(</span>POD <span class="p">|</span> TYPE/NAME<span class="o">)</span> <span class="o">[</span>-c CONTAINER<span class="o">]</span> <span class="o">[</span>options<span class="o">]</span>
+</span></span><span class="line"><span class="cl">      <span class="c1"># Examples: </span>
+</span></span><span class="line"><span class="cl">      kubectl logs my-pod                              
+</span></span><span class="line"><span class="cl">      <span class="c1"># 输出一个单容器pod my-pod的日志到标准输出</span>
+</span></span><span class="line"><span class="cl">      kubectl logs nginx-78f5d695bd-czm8z -c nginx     
+</span></span><span class="line"><span class="cl">      <span class="c1"># 输出多容器pod中的某个nginx容器的日志</span>
+</span></span><span class="line"><span class="cl">      kubectl logs -l <span class="nv">app</span><span class="o">=</span>nginx                        
+</span></span><span class="line"><span class="cl">      <span class="c1"># 输出所有包含app-nginx标签的pod日志</span>
+</span></span><span class="line"><span class="cl">      kubectl logs -f my-pod                           
+</span></span><span class="line"><span class="cl">      <span class="c1"># 加上-f参数跟踪日志，类似tail -f</span>
+</span></span><span class="line"><span class="cl">      kubectl logs my-pod  -p                          
+</span></span><span class="line"><span class="cl">      <span class="c1"># 输出该pod的上一个退出的容器实例日志。在pod容器异常退出时很有用</span>
+</span></span><span class="line"><span class="cl">      kubectl logs my-pod  --since-time<span class="o">=</span>2018-11-01T15:00:00Z
+</span></span><span class="line"><span class="cl">      <span class="c1"># 指定时间戳输出日志            </span>
+</span></span><span class="line"><span class="cl">      kubectl logs my-pod  --since<span class="o">=</span>1h 
+</span></span><span class="line"><span class="cl">      <span class="c1"># 指定时间段输出日志，单位s/m/h</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 快速创建一个depolyment</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl run --image<span class="o">=</span>nginx:alpine nginx-app --port<span class="o">=</span><span class="m">8180</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 进入容器内部, 双破折号 &#34;--&#34; 用于将要传递给命令的参数与 kubectl 的参数分开。后面加上 -i 和 -t 来运行一个连接到你的终端的 Shell,</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl <span class="nb">exec</span> -it -n &lt;namespace&gt; &lt;pod_name&gt; -- /bin/bash
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl">  -c, --container<span class="o">=</span><span class="s2">&#34;&#34;</span>: 容器名。如果未指定，使用pod中的一个容器。
+</span></span><span class="line"><span class="cl">  -p, --pod<span class="o">=</span><span class="s2">&#34;&#34;</span>: Pod名。
+</span></span><span class="line"><span class="cl">  -i, --stdin<span class="o">[=</span>false<span class="o">]</span>: 将控制台输入发送到容器。
+</span></span><span class="line"><span class="cl">  -t, --tty<span class="o">[=</span>false<span class="o">]</span>: 将标准输入控制台作为容器的控制台输入。。
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 给k8s对象设置标签</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 设置标签</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl label pod <span class="nv">$POD_NAME</span> <span class="nv">app</span><span class="o">=</span>v1
+</span></span><span class="line"><span class="cl"><span class="c1"># 设置之后, 可如下使用: </span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get pods -l <span class="nv">app</span><span class="o">=</span>v1
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 删除 k8s 对象</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl delete -n &lt;namespace&gt; &lt;对象名称&gt;
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 从 yaml 创建对象</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl create -f xxx.yaml
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 扩容, 指定扩大副本数到什么个</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl scale deployment &lt;deploy_name&gt; --replicas <span class="m">10</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 自动扩容</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl autoscale deployment &lt;deploy_name&gt; --min<span class="o">=</span><span class="m">10</span> --max<span class="o">=</span><span class="m">15</span> --cpu-percent<span class="o">=</span><span class="m">80</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 更新镜像</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl <span class="nb">set</span> image deployment/&lt;deploy_name&gt; <span class="nv">nginx</span><span class="o">=</span>nginx:1.9.1
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 回滚版本</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl rollout undo deployment/&lt;deploy_name&gt;
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1">#  对指定的replication controller执行滚动升级。</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl rolling-update &lt;pod_name&gt; -image<span class="o">=</span>image:v2
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 拷贝本地文件到pod内部，用于pod和外部的文件交换，比如如下示例了如何在进行内外文件交换。</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl cp &lt;pod_name&gt;:/tmp/message.log message.log
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># --watch 参数可以监控资源的状态，在状态变换时输出。在跟踪服务部署情况时很有用</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get deployment &lt;deploy_name&gt; --watch
+</span></span></code></pre></div><h2 id="kubernetes-排障">Kubernetes 排障</h2>
+<h3 id="服务跑不起来怎么办">服务跑不起来怎么办？</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># 服务跑不起来怎么办？</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 1、查看 deployment 是否ready</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get deploy -n &lt;namespace&gt;
+</span></span><span class="line"><span class="cl">NAMESPACE              NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span class="line"><span class="cl">kube-system            kubernetes-dashboard        1/1     <span class="m">1</span>            <span class="m">1</span>           4h
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 2、查看 Pod 状态以及运行节点, pod 如果有问题，一般状态都是 CrashLoopBackOff 或者 failed </span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get pods -n &lt;namespace&gt; -o wide
+</span></span><span class="line"><span class="cl"><span class="c1"># 常见的错误</span>
+</span></span><span class="line"><span class="cl">CrashLoopBackOff： 容器退出，kubelet正在将它重启
+</span></span><span class="line"><span class="cl">InvalidImageName： 无法解析镜像名称
+</span></span><span class="line"><span class="cl">ImageInspectError： 无法校验镜像
+</span></span><span class="line"><span class="cl">ErrImageNeverPull： 策略禁止拉取镜像
+</span></span><span class="line"><span class="cl">ImagePullBackOff： 正在重试拉取
+</span></span><span class="line"><span class="cl">RegistryUnavailable： 连接不到镜像中心
+</span></span><span class="line"><span class="cl">ErrImagePull： 通用的拉取镜像出错
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 3、查看 pod event 事件</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl describe pod -n &lt;namespace&gt; &lt;pod_name&gt;
+</span></span><span class="line"><span class="cl">Events:
+</span></span><span class="line"><span class="cl">  Type     Reason     Age                    From               Message
+</span></span><span class="line"><span class="cl">  ----     ------     ----                   ----               -------
+</span></span><span class="line"><span class="cl">  Normal   Scheduled  3h41m                  default-scheduler  Successfully assigned kubernetes-dashboard/kubernetes-dashboard-658485d5c7-qh94f to docker-desktop
+</span></span><span class="line"><span class="cl">  Normal   Pulled     3h41m                  kubelet            Successfully pulled image <span class="s2">&#34;kubernetesui/dashboard:v2.3.1&#34;</span> in 15.7084595s
+</span></span><span class="line"><span class="cl">  Normal   Pulled     3h41m                  kubelet            Successfully pulled image <span class="s2">&#34;kubernetesui/dashboard:v2.3.1&#34;</span> in 1.1687069s
+</span></span><span class="line"><span class="cl">  Warning  Unhealthy  3h40m                  kubelet            Liveness probe failed: Get <span class="s2">&#34;https://10.1.0.120:8443/&#34;</span>: dial tcp 10.1.0.120:8443: connect: connection refused
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 可通过下面命令，查看一个命名空间所有的事件</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get events -n &lt;namespace&gt;
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 4、如果pod正常访问，服务无法访问, 可以通过命令查看pod的日志，查看是否有报错信息，这也是我们平时业务查看日志最直接的一种方式，另外一种是通过 granfa 平台查看</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl logs -f &lt;pod_name&gt; -n &lt;namespace&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 5、如果不是业务报错，还可以查看一下 k8s node 的状态，看看是不是因为 node not ready 导致pod运行不起来</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl get no -o wide
+</span></span><span class="line"><span class="cl">NAME             STATUS   ROLES    AGE    VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE         KERNEL-VERSION     CONTAINER-RUNTIME
+</span></span><span class="line"><span class="cl">docker-desktop   Ready    &lt;none&gt;   7d9h   v1.19.3   192.168.65.4   &lt;none&gt;        Docker Desktop   5.10.25-linuxkit   docker://20.10.7
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 6、如果 node 的状态不是 Ready，可以查看node的 event信息, 可看看 node 的具体负载情况，包括cpu、memory、disk是否有压力等情况</span>
+</span></span><span class="line"><span class="cl">➜  ~ kubectl describe node &lt;node_name&gt;
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 7、查看 kubelet 是否存在异常日志(这个找 sre 看，因为这个要登到节点上查看)</span>
+</span></span><span class="line"><span class="cl">➜  ~ journalctl -u kubelet -f 
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 8、查看网络插件是否启动（calico、flannel、weave），这些组件一般以 deployment 运行在 k8s集群内部</span>
+</span></span></code></pre></div><p><strong>pod 的几种状态</strong></p>
+<ul>
+<li>
+<p>Pending 创建pod的请求已经被k8s接受，但是容器并没有启动成功，可能处在：写数据到etcd，调度，pull镜像，启动容器这四个阶段中的任何一个阶段，pending伴随的事件通常会有：ADDED, Modified这两个事件的产生。</p>
+</li>
+<li>
+<p>Running pod已经绑定到node节点，并且所有的容器已经启动成功，或者至少有一个容器在运行，或者在重启中。</p>
+</li>
+<li>
+<p>Succeeded pod中的所有的容器已经正常的自行退出，并且k8s永远不会自动重启这些容器，一般会是在部署job的时候会出现。</p>
+</li>
+<li>
+<p>Failed pod中的所有容器已经终止，并且至少有一个容器已经终止于失败（退出非零退出代码或被系统停止）。</p>
+</li>
+<li>
+<p>Unknown 由于某种原因，无法获得pod的状态，通常是由于与pod的主机通信错误。</p>
+</li>
+</ul>
+<h3 id="service-无法访问">Service 无法访问？</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># 1、检查 service 是否存在相应的endpoints，endpoints == pod_ip:port，如果该列表为空，则有可能是该 Service 的 LabelSelector 配置错误，可以用下面的方法确认一下</span>
+</span></span><span class="line"><span class="cl">kubectl get endpoints &lt;service-name&gt;
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 2、查询 Service 的 LabelSelector</span>
+</span></span><span class="line"><span class="cl">kubectl get svc &lt;service-name&gt; -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.spec.selector}&#39;</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 3、查询匹配 LabelSelector 的 Pod</span>
+</span></span><span class="line"><span class="cl">kubectl get pods -l <span class="nv">key1</span><span class="o">=</span>value1,key2<span class="o">=</span>value2
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 4、如果 Endpoints 正常，可以进一步检查， Pod 的 containerPort 与 Service 的 containerPort 是否对应直接访问 podIP:containerPort 是否正常</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="c1"># 5、还有其他的原因会导致 Service 无法访问，比如</span>
+</span></span><span class="line"><span class="cl">Pod 内的容器有可能未正常运行或者没有监听在指定的 containerPort 上
+</span></span><span class="line"><span class="cl">CNI 网络或主机路由异常也会导致类似的问题
+</span></span><span class="line"><span class="cl">kube-proxy 服务有可能未启动或者未正确配置相应的 iptables 规则，比如正常情况下名为 hostnames 的服务会配置以下 iptables 规则
+</span></span></code></pre></div><h2 id="kubernetes-负载均衡">Kubernetes 负载均衡</h2>
+<p>目前我们业务上pod 与 pod 之间的网络通信是通过 service提供服务的，因为 pod的 IP是不固定的，所以需要一个固定的IP为服务提供访问入口。原理其实是宿主机的kube-proxy生成的iptables规则 ，及core-dns生成的DNS记录, Service通过label标签选中Pod，被选中的的Pod称为Service的Endpoints（官方文档：https://kubernetes.io/zh/docs/concepts/services-networking/service/）</p>
+<p>service 提供了四种访问方式，我们一般默认设置是 ClusterIP 方式：</p>
+<ul>
+<li>
+<p>ClusterIP：通过集群的内部 IP 暴露服务，选择该值时服务只能够在集群内部访问。</p>
+</li>
+<li>
+<p>NodePort：通过每个节点上的 IP 和静态端口（NodePort）暴露服务。 NodePort 服务会路由到自动创建的 ClusterIP 服务。 通过请求 &lt;节点 IP&gt;:&lt;节点端口&gt;，你可以从集群的外部访问一个 NodePort 服务。</p>
+</li>
+<li>
+<p>LoadBalancer：使用云提供商的负载均衡器向外部暴露服务。 外部负载均衡器可以将流量路由到自动创建的 NodePort 服务和 ClusterIP 服务上。</p>
+</li>
+<li>
+<p>ExternalName：通过返回 CNAME 和对应值，可以将服务映射到 externalName 字段的内容（例如，foo.bar.example.com）。 无需创建任何类型代理</p>
+</li>
+</ul>
+<p><a href="https://imgse.com/i/pkZTx4P" target="_blank" rel="noopener noreffer "><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://s21.ax1x.com/2024/05/11/pkZTx4P.png"
+        data-srcset="https://s21.ax1x.com/2024/05/11/pkZTx4P.png, https://s21.ax1x.com/2024/05/11/pkZTx4P.png 1.5x, https://s21.ax1x.com/2024/05/11/pkZTx4P.png 2x"
+        data-sizes="auto"
+        alt="https://s21.ax1x.com/2024/05/11/pkZTx4P.png"
+        title="pkZTx4P.png" /></a></p>
+<h2 id="参考">参考</h2>
+<p><a href="https://kubernetes.io/zh/docs/home/" target="_blank" rel="noopener noreffer ">官方文档</a></p>
+<p><a href="https://jimmysong.io/kubernetes-handbook/guide/kubectl-cheatsheet.html" target="_blank" rel="noopener noreffer ">Kubernetes 中文指南</a></p>
+<p>排障指南：<a href="https://confluence.shopee.io/download/attachments/627311003/Kubernetes%20%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4%E6%8C%87%E5%8D%97%28%E4%B8%AD%E6%96%87%E7%89%88%29.pdf?version=1&amp;modificationDate=1627871265000&amp;api=v2" target="_blank" rel="noopener noreffer ">Kubernetes 故障排除指南(中文版).pdf</a></p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2021-08-02</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>,&nbsp;<a href="/tags/kubernetes/">Kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/apsscheduler_01/" class="prev" rel="prev" title="Python定时任务之APScheduler源码分析（一）"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>Python定时任务之APScheduler源码分析（一）</a>
+            <a href="/posts/hpa/" class="next" rel="next" title="Kubernetes HPA 浅入深出">Kubernetes HPA 浅入深出<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.125.6">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://github.com/guoweikuang" target="_blank">guoweikuang</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":10},"comment":{}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>
