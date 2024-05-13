@@ -1,0 +1,16 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>微服务 - Tag - guoweikuang 技术博客</title>
+        <link>https://guoweikuang.github.io/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/</link>
+        <description>微服务 - Tag - guoweikuang 技术博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>guoweikuang2015@gmail.com (guoweikuang)</managingEditor>
+            <webMaster>guoweikuang2015@gmail.com (guoweikuang)</webMaster><lastBuildDate>Wed, 27 Apr 2022 12:03:30 &#43;0800</lastBuildDate><atom:link href="https://guoweikuang.github.io/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="self" type="application/rss+xml" /><item>
+    <title>全局唯一ID服务化方案</title>
+    <link>https://guoweikuang.github.io/posts/id_generate/</link>
+    <pubDate>Wed, 27 Apr 2022 12:03:30 &#43;0800</pubDate>
+    <author>guoweikuang</author>
+    <guid>https://guoweikuang.github.io/posts/id_generate/</guid>
+    <description><![CDATA[一、背景 目前 snowflake 大ID的代码，通过库调用的方式在业务系统使用。这种调用方式是最快、最容易实现的。但同时存在缺点，因为是耦合在业务代码中，因此在]]></description>
+</item>
+</channel>
+</rss>

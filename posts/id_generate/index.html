@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>全局唯一ID服务化方案 - guoweikuang 技术博客</title><meta name="Description" content=""><meta property="og:url" content="https://guoweikuang.github.io/posts/id_generate/">
+  <meta property="og:site_name" content="guoweikuang 技术博客">
+  <meta property="og:title" content="全局唯一ID服务化方案">
+  <meta property="og:description" content="一、背景 目前 snowflake 大ID的代码，通过库调用的方式在业务系统使用。这种调用方式是最快、最容易实现的。但同时存在缺点，因为是耦合在业务代码中，因此在">
+  <meta property="og:locale" content="zh-CN">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2022-04-27T12:03:30+08:00">
+    <meta property="article:modified_time" content="2022-04-27T12:03:30+08:00">
+    <meta property="article:tag" content="Golang">
+    <meta property="article:tag" content="微服务">
+<meta name="twitter:card" content="summary"><meta name="twitter:title" content="全局唯一ID服务化方案">
+<meta name="twitter:description" content="一、背景 目前 snowflake 大ID的代码，通过库调用的方式在业务系统使用。这种调用方式是最快、最容易实现的。但同时存在缺点，因为是耦合在业务代码中，因此在">
+<meta name="application-name" content="guoweikuang 技术博客">
+<meta name="apple-mobile-web-app-title" content="guoweikuang 技术博客"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://guoweikuang.github.io/posts/id_generate/" /><link rel="prev" href="https://guoweikuang.github.io/posts/kubernetes_simple/" /><link rel="next" href="https://guoweikuang.github.io/posts/hpa/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "全局唯一ID服务化方案",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/guoweikuang.github.io\/posts\/id_generate\/"
+        },"genre": "posts","keywords": "Golang, 微服务","wordcount":  3325 ,
+        "url": "https:\/\/guoweikuang.github.io\/posts\/id_generate\/","datePublished": "2022-04-27T12:03:30+08:00","dateModified": "2022-04-27T12:03:30+08:00","publisher": {
+            "@type": "Organization",
+            "name": "guoweikuang"},"author": {
+                "@type": "Person",
+                "name": "guoweikuang"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="" data-header-mobile=""><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : '' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="guoweikuang 技术博客">guoweikuang 技术博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="guoweikuang 技术博客">guoweikuang 技术博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">全局唯一ID服务化方案</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://github.com/guoweikuang" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>guoweikuang</a></span>&nbsp;<span class="post-category">included in <a href="/categories/golang/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>Golang</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2022-04-27">2022-04-27</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;3325 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;7 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#一背景">一、背景</a></li>
+    <li><a href="#二当前实现">二、当前实现</a>
+      <ul>
+        <li><a href="#1snowflake-id-组成部分">1、snowflake ID 组成部分</a></li>
+        <li><a href="#2生成id算法">2、生成ID算法</a></li>
+        <li><a href="#3具体流程步骤">3、具体流程步骤</a></li>
+      </ul>
+    </li>
+    <li><a href="#三大id生成器新方案">三、大ID生成器新方案</a>
+      <ul>
+        <li><a href="#31-改造-snowflake-id-的结构">3.1 改造 snowflake ID 的结构</a></li>
+        <li><a href="#32-snowflake-配置改造">3.2 snowflake 配置改造</a></li>
+        <li><a href="#33-初始化-snowflake-实例">3.3 初始化 snowflake 实例</a></li>
+        <li><a href="#34-注册-etcd-的节点结构">3.4 注册 etcd 的节点结构</a></li>
+        <li><a href="#35-snowflake-id生成算法">3.5 snowflake id生成算法</a></li>
+        <li><a href="#36-snowflake-id-服务">3.6 snowflake id 服务</a></li>
+        <li><a href="#37-访问-snowflake-服务">3.7 访问 snowflake 服务</a></li>
+      </ul>
+    </li>
+    <li><a href="#四大id服务无法提供服务的降级方案">四、大ID服务无法提供服务的降级方案</a>
+      <ul>
+        <li><a href="#降级步骤">降级步骤</a></li>
+        <li><a href="#存在问题">存在问题：</a></li>
+      </ul>
+    </li>
+    <li><a href="#五新方案问题汇总">五、新方案问题汇总</a>
+      <ul>
+        <li><a href="#完整代码">完整代码</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="一背景">一、背景</h2>
+<p>目前 snowflake 大ID的代码，通过库调用的方式在业务系统使用。这种调用方式是最快、最容易实现的。但同时存在缺点，因为是耦合在业务代码中，因此在适配多地区或者部署多个服务的情况下，因为服务不可动态配置原因，无法保证生成的 ID 的唯一性，也会导致代码的可维护性差</p>
+<h2 id="二当前实现">二、当前实现</h2>
+<h3 id="1snowflake-id-组成部分">1、snowflake ID 组成部分</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="line"><span class="cl">	<span class="nx">timestamp_bits</span>   <span class="p">=</span> <span class="mi">42</span>  <span class="c1">// 时间戳位数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">process_id_bits</span>  <span class="p">=</span> <span class="mi">9</span>   <span class="c1">// 进程ID位数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">sequence_id_bits</span> <span class="p">=</span> <span class="mi">12</span>  <span class="c1">// 序列号ID位数
+</span></span></span></code></pre></div><ul>
+<li>使用 42 bit 作为毫秒时间戳，表示范围 0 至 2^42 - 1</li>
+<li>使用 9 bit 表示进程ID</li>
+<li>使用 12 bit 表示同一毫秒内生成的序号ID（最多4096个）
+以上三个加起来只有 63 bit，二进制中最高位为1的都是负数，因此没有使用
+最终拼接的 snowflake ID 结构如下</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">&lt;timestamp_bits:42bit&gt;&lt;process_id_bits:9bit&gt;&lt;sequence_id_bits:12bit&gt;
+</span></span></code></pre></div><h3 id="2生成id算法">2、生成ID算法</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="line"><span class="cl"><span class="kd">const</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">twepoch</span>            <span class="p">=</span> <span class="mi">1596364434706</span> <span class="c1">// begin time 2020-08-02 18:33:54
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">timestamp_bits</span>     <span class="p">=</span> <span class="mi">42</span>            <span class="c1">// 时间戳占 42 位, 如果需要表示时间更久，可延长位数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">datacenter_id_bits</span> <span class="p">=</span> <span class="mi">3</span>             <span class="c1">// 数据中心 id， 占 3 位，可表示 8 个数据中心
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">process_id_bits</span>    <span class="p">=</span> <span class="mi">6</span>             <span class="c1">// 进程id(可理解为机器id), 占 6位，可表示 64 台机器
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">sequence_id_bits</span>   <span class="p">=</span> <span class="mi">12</span>            <span class="c1">// 序列号，每次新增都自增 1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">max_timestamp</span>      <span class="p">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nx">timestamp_bits</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">max_datacenter_id</span>  <span class="p">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nx">datacenter_id_bits</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">max_process_id</span>     <span class="p">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nx">process_id_bits</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">max_sequence_id</span>    <span class="p">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nx">sequence_id_bits</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">make_snowflake</span><span class="p">(</span><span class="nx">timestamp_ms</span> <span class="kt">int64</span><span class="p">,</span> <span class="nx">process_id</span> <span class="kt">int64</span><span class="p">,</span> <span class="nx">sequence_id</span> <span class="kt">int64</span><span class="p">)</span> <span class="kt">int64</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">snowflakeid</span> <span class="o">:=</span> <span class="p">((</span><span class="nx">timestamp_ms</span> <span class="o">-</span> <span class="nx">twepoch</span><span class="p">)</span> <span class="o">%</span> <span class="nx">max_timestamp</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="nx">process_id_bits</span> <span class="o">&lt;&lt;</span> <span class="nx">sequence_id_bits</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">snowflakeid</span> <span class="o">+=</span> <span class="p">(</span><span class="nx">process_id</span> <span class="o">%</span> <span class="nx">max_process_id</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="nx">sequence_id_bits</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">snowflakeid</span> <span class="o">+=</span> <span class="nx">sequence_id</span> <span class="o">%</span> <span class="nx">max_sequence_id</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">snowflakeid</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><ul>
+<li>第一行，根据当前毫秒时间戳 - 起始毫秒时间戳，再通过 % 求余操作，保证不会超过最大时间戳，由于时间戳在高位，因此需要左移 process_id_bits + sequence_id_bits 位数，才能将时间戳放置到指定的 bit 位</li>
+<li>第二行，将process_id 通过 % 求余，保证不会超过最大 process_id, process_id 是中间位置的组成部分，因此也需要左移 sequence_id_bits 位数，才能将 process_id 放置到指定bit 位，然后通过 += 加法累加</li>
+<li>第三行，sequence_id 在最低位，因此只需要 % 求余，保证不会超过最大的 sequence_id，然后累加即可</li>
+</ul>
+<h3 id="3具体流程步骤">3、具体流程步骤</h3>
+<h4 id="31-一个服务需要使用到-snowflake-id就需要在服务启动时先初始化一个snowflake实例">3.1 一个服务需要使用到 snowflake ID，就需要在服务启动时，先初始化一个snowflake实例</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">Init</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">snowflakeetcd</span><span class="p">.</span><span class="nf">Dialog</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">cnf</span> <span class="o">:=</span> <span class="nx">settings</span><span class="p">.</span><span class="nf">Etcd</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">snowflakeetcd</span><span class="p">.</span><span class="nf">Setup</span><span class="p">(</span><span class="nx">cnf</span><span class="p">.</span><span class="nx">Hosts</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">quesNameSpace</span> <span class="o">:=</span> <span class="nf">getQuestionSnowflakeNameSpace</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">questionSnowflake</span> <span class="p">=</span> <span class="nx">snowflakeetcd</span><span class="p">.</span><span class="nf">GetGenerator</span><span class="p">(</span><span class="nx">quesNameSpace</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>需要设置 namespace 命名空间做区分使用，如果有多个业务场景使用到大ID，并且两者之间没有关联的话，就可以通过指定 namespace 方式，实现不同ID段的管理，避免生成了重复的ID</p>
+<h4 id="32-注册-node-到-etcd-步骤">3.2 注册 node 到 etcd 步骤</h4>
+<p>到 etcd 查询所有的 node 节点（一个节点表示一个服务的启用，如果一个服务实例化多个 snowflake 实例，那么就会有多个节点），下面是 etcd 的目录层级结构</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="line"><span class="cl"><span class="o">/</span><span class="nx">_snowflake_</span><span class="o">/</span><span class="nx">nodes</span><span class="o">/</span><span class="p">&lt;</span><span class="nx">自定义</span><span class="p">&gt;</span><span class="o">/</span><span class="mi">1</span>
+</span></span><span class="line"><span class="cl"><span class="p">&lt;</span><span class="nx">node_path</span><span class="p">&gt;</span><span class="o">/</span><span class="p">&lt;</span><span class="nx">namespace</span><span class="p">&gt;.&lt;</span><span class="nx">env</span><span class="p">&gt;</span><span class="o">/</span><span class="p">&lt;</span><span class="nx">pid</span><span class="p">&gt;</span>
+</span></span></code></pre></div><p>其中 pid 的生成有一定的逻辑判断，如果当前 node 目录下已经有节点</p>
+<ul>
+<li>从 etcd 取到最大的 max_pid, 如果 &lt; max_process_id - 1 的话，那么新增的 pid = max_id += 1</li>
+<li>如果 max_id &gt;= max_process_id - 1，会有一定的判断逻辑，具体见代码，不展开讲解</li>
+</ul>
+<p>最后将实例化完成的 snowflake 放入 map 存储，避免多次实例化操作</p>
+<h4 id="33-生成大-id-细节">3.3 生成大 ID 细节</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">sf</span> <span class="o">*</span><span class="nx">SnowFlake</span><span class="p">)</span> <span class="nf">gen</span><span class="p">()</span> <span class="kt">int64</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">sf</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">defer</span> <span class="nx">sf</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">ts</span> <span class="o">:=</span> <span class="nf">make_timestamp</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">seq</span> <span class="o">:=</span> <span class="nx">sf</span><span class="p">.</span><span class="nf">getSequnce</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">ts</span> <span class="o">==</span> <span class="nx">sf</span><span class="p">.</span><span class="nx">last_ts</span> <span class="o">&amp;&amp;</span> <span class="nx">seq</span> <span class="o">&lt;=</span> <span class="nx">sf</span><span class="p">.</span><span class="nx">last_seq</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">1</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">sid</span> <span class="o">:=</span> <span class="nf">make_snowflake</span><span class="p">(</span><span class="nx">ts</span><span class="p">,</span> <span class="nx">sf</span><span class="p">.</span><span class="nx">process_id</span><span class="p">,</span> <span class="nx">seq</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">sf</span><span class="p">.</span><span class="nx">last_ts</span> <span class="p">=</span> <span class="nx">ts</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">sf</span><span class="p">.</span><span class="nx">last_seq</span> <span class="p">=</span> <span class="nx">seq</span>
+</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="nx">sid</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><ul>
+<li>生成ID前先加锁</li>
+<li>生成新的序列号，sf.getSequnce(), 每次都是自增1</li>
+<li>如果当前生成的 ID 的时间戳与上一次生成的ID时间戳是一样，并且序列号和上一次的序列号是一样的，直接sleep 1 毫秒，避免生成重复的ID</li>
+<li>生成 ID 成功后，需要设置 last_ts 和 last_seq</li>
+</ul>
+<h2 id="三大id生成器新方案">三、大ID生成器新方案</h2>
+<p>新的大ID生成器方案会对之前 golang 的 snowflake 库进行改造，支持多地区生成唯一的 ID</p>
+<h3 id="31-改造-snowflake-id-的结构">3.1 改造 snowflake ID 的结构</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">&lt;timestamp_bits:42bit&gt;&lt;datacenter_id_bit:3bit&gt;&lt;process_id_bit:6bit&gt;&lt;sequence_id_bits:12bit&gt;
+</span></span></code></pre></div><ul>
+<li>将之前的 process_id 字段拆分为两部分，3bit 表示数据中心ID，剩下的 6 bit 表示节点ID</li>
+</ul>
+<h3 id="32-snowflake-配置改造">3.2 snowflake 配置改造</h3>
+<p>之前 snowflake 不支持通过配置文件来配置相关信息，比如支持通过配置文件传递 datacenter_id 来保存多地区的使用，需要配置文件需要配置的格式</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="line"><span class="cl"><span class="err">#</span> <span class="nx">数据中心ID只有</span> <span class="mi">3</span> <span class="nx">bit表示</span><span class="err">，</span><span class="nx">范围需要限制在</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="nx">SNOWFLAKE_CONFIG</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">datacenter_id</span><span class="p">:</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">datacenter</span><span class="p">:</span> <span class="s">&#34;cn&#34;</span> 
+</span></span></code></pre></div><ul>
+<li>由于 datacenter_id 只有 3 bit，因此在多地区部署时，需要修改相应的 id， 可供选择的 id 范围是 [0, 2^3-1], 也就是 [0, 1, 2, 3, 4, 5, 6, 7], 每个值表示一个数据中心</li>
+<li>datacenter 尽量填写相关地区的英文简称，这个字段会在etcd 目录做数据中心的区分路径</li>
+</ul>
+<h3 id="33-初始化-snowflake-实例">3.3 初始化 snowflake 实例</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="line"><span class="cl">	<span class="nx">dataCenter</span> <span class="o">:=</span> <span class="s">&#34;sg&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">dataCenterID</span> <span class="o">:=</span> <span class="nb">int64</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">QuestionSnowflake</span> <span class="p">=</span> <span class="nx">snowflakeetcd</span><span class="p">.</span><span class="nf">GetGenerator</span><span class="p">(</span><span class="nx">quesNameSpace</span><span class="p">,</span> <span class="nx">dataCenter</span><span class="p">,</span> <span class="nx">dataCenterID</span><span class="p">)</span>
+</span></span></code></pre></div><p>需要多传入 datacenter 和 datacenter_id 参数，作为不同地区初始化 snowflake 的初始条件</p>
+<h3 id="34-注册-etcd-的节点结构">3.4 注册 etcd 的节点结构</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="line"><span class="cl"><span class="o">/</span><span class="p">&lt;</span><span class="nx">自定义</span><span class="p">&gt;</span><span class="o">/</span><span class="nx">_snowflake_</span><span class="o">/</span><span class="nx">nodes</span><span class="o">/</span><span class="p">&lt;</span><span class="nx">datacenter</span><span class="p">&gt;</span><span class="o">/</span><span class="p">&lt;</span><span class="nx">namespace</span><span class="p">&gt;.&lt;</span><span class="nx">env</span><span class="p">&gt;</span><span class="o">/</span><span class="p">&lt;</span><span class="nx">process_id</span><span class="p">&gt;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 具体实现
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="o">/</span><span class="nx">xxx</span><span class="o">/</span><span class="nx">_snowflake_</span><span class="o">/</span><span class="nx">nodes</span><span class="o">/</span><span class="nx">cn</span><span class="o">/</span><span class="nx">xxx</span><span class="p">.</span><span class="nx">dev</span><span class="o">/</span><span class="mi">1</span>
+</span></span></code></pre></div><h3 id="35-snowflake-id生成算法">3.5 snowflake id生成算法</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">make_snowflake</span><span class="p">(</span><span class="nx">timestamp_ms</span> <span class="kt">int64</span><span class="p">,</span> <span class="nx">datacenter_id</span><span class="p">,</span> <span class="nx">process_id</span> <span class="kt">int64</span><span class="p">,</span> <span class="nx">sequence_id</span> <span class="kt">int64</span><span class="p">)</span> <span class="kt">int64</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 将时间戳左移到指定高位，移动（datacenter_id_bits + datacenter_id_bits + sequence_id_bits) 位
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">snowflakeid</span> <span class="o">:=</span> <span class="p">((</span><span class="nx">timestamp_ms</span> <span class="o">-</span> <span class="nx">twepoch</span><span class="p">)</span> <span class="o">%</span> <span class="nx">max_timestamp</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="nx">datacenter_id_bits</span> <span class="o">&lt;&lt;</span> <span class="nx">process_id_bits</span> <span class="o">&lt;&lt;</span> <span class="nx">sequence_id_bits</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 将数据中心 ID 移动 process_id_bits + sequence_id_bits 位
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">snowflakeid</span> <span class="o">+=</span> <span class="p">(</span><span class="nx">datacenter_id</span> <span class="o">%</span> <span class="nx">max_datacenter_id</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="nx">process_id_bits</span> <span class="o">&lt;&lt;</span> <span class="nx">sequence_id_bits</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 将 process_id 移动 sequence_id_bits 位
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">snowflakeid</span> <span class="o">+=</span> <span class="p">(</span><span class="nx">process_id</span> <span class="o">%</span> <span class="nx">max_process_id</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="nx">sequence_id_bits</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 序列化在低位，不需要移位操作
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">snowflakeid</span> <span class="o">+=</span> <span class="nx">sequence_id</span> <span class="o">%</span> <span class="nx">max_sequence_id</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">snowflakeid</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="36-snowflake-id-服务">3.6 snowflake id 服务</h3>
+<p>snowflake 单独部署为一个服务，目前通过 http 协议提供生成大ID的接口，暂时没有使用 rpc 协议
+该服务只提供一个接口，需要提供传参namespace, 1 表示 xxx, 2 表示 yyy</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">// POST： /api/snowflake/v1/gen/
+</span></span><span class="line"><span class="cl">// Request: 
+</span></span><span class="line"><span class="cl"><span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;namespace&#34;</span>: <span class="m">1</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span><span class="line"><span class="cl">// Response:
+</span></span><span class="line"><span class="cl"><span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;message&#34;</span>: <span class="s2">&#34;success&#34;</span>,
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;code&#34;</span>: 0,
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;data&#34;</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;snowflake_id&#34;</span>: 107209837483659272,
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;datacenter_id&#34;</span>: 1,
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><h3 id="37-访问-snowflake-服务">3.7 访问 snowflake 服务</h3>
+<p>因为 snowflake 通过容器部署在k8s上，因此需要通过域名进行访问服务</p>
+<ul>
+<li>如果是腾讯云集群的话，可以通过 k8s service 提供的域名进行调用</li>
+<li>如果后期在内部 的 k8s 集群也部署同样的服务，需要申请内部域名进行调用（具体细节待定）</li>
+</ul>
+<h2 id="四大id服务无法提供服务的降级方案">四、大ID服务无法提供服务的降级方案</h2>
+<p>考虑到 大 ID 服务是一个单独服务，有可能因为集群网络、服务故障等原因，导致该服务不可用，进而影响到正常的业务处理</p>
+<h3 id="降级步骤">降级步骤</h3>
+<ul>
+<li>服务启动时，同时实例化本地的 snowflake 生成器，该生成器没有使用 datacenter_id 字段，而是将 9 个 bit 位全部给 process_id ,并且在启动时，随机生成一个 process_id</li>
+<li>请求 snowflake 服务超时 3s,  那么直接调用本地生成器生成 snowflake id（暂时不考虑本地生成的ID出现重复情况）</li>
+<li>如果一个调用方服务启用了 20个 pod， 那么会使用到 20 个随机 process_id （目前确认Python侧代码在服务启动时，并没有实例化 snowflake)</li>
+</ul>
+<h3 id="存在问题">存在问题：</h3>
+<ul>
+<li>
+<p>因为每个服务都会有多个pod, 启动服务的时候初始化snowflake, 会占用很多 process_id
+可以业务代码在snowflake 访问请求失败后，再尝试实例化本地snowflake, 不过这还得保证这个实例化是单例的</p>
+</li>
+<li>
+<p>本地启用  snowflake 生成器，写死了不使用 etcd， 如果需要启用etcd，就需要改代码
+可以通过开关方式来设置是否启用 etcd，snowflake的基础代码支持对 etcd 的开关即可</p>
+</li>
+</ul>
+<h2 id="五新方案问题汇总">五、新方案问题汇总</h2>
+<p><strong>1、使用 http 提供服务，可能会导致获取新ID变得很慢（几十ms，之前可能就几ms内）</strong></p>
+<p>解答： 先验证一下 http 服务的整个链路所花费的时长，后续 rpc 可作为优化项</p>
+<p><strong>2、如果 snowflake 访问量过大，是否可以像无状态服务一样，对该服务进行扩容并提供服务</strong></p>
+<p>解答：snowflake 服务启动都会实例化一个节点，只要保证节点数不超过 2^6 个数即可，当前服务只有两个服务需要大ID，理论上是够用的，但是要确保 snowflake 服务不会启动过多pod(2^6 / 2)</p>
+<p><strong>3、确保 旧服务与新服务生成的 ID 不出现重复</strong></p>
+<p>解答：因为当前 etcd 的 /snowflake/nodes/ 下的节点都添加了 datacenter 前缀，因此如果与旧方案的生成 ID 算法一起运行会导致生成的 ID 一样，因为可能会有相同的 process_id 会被两个服务所使用。因此需要确保新的snowflake 服务被调用生成新 ID 前，所有业务服务也相应调用新的 snowflake 服务来获取新ID</p>
+<p><strong>4、时钟回拨问题，确保 snowflake 服务的时钟不要出现回拨情况</strong></p>
+<p>目前来说，容器内的时钟都是通过</p>
+<p><strong>5、如何确保 datacenter_id 不会出现用错情况（比如cn地区使用了sg地区的标识）</strong></p>
+<p>目前来说，通过配置文件进行区别，或者通过环境变量来设置数据中心标识</p>
+<p><strong>6、如何验证生成的ID是属于正确的数据中心的</strong></p>
+<pre tabindex="0"><code>比如 snowflake_id:  108152875544481803
+将该 snowflake_id 转换成二进制如下：
+         &lt;timestamp&gt;                        &lt;数据中心id&gt;   &lt;机器ID&gt;     &lt;序列号&gt;
+0 000000110000000001111000111011110100000010   001        000001      000000010000
+可以计算出，数据中心id的十进制是 1
+</code></pre><h3 id="完整代码">完整代码</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">SnowFlake</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">sequence</span>      <span class="kt">int64</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">last_ts</span>       <span class="kt">int64</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">last_seq</span>      <span class="kt">int64</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">datacenter_id</span> <span class="kt">int64</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">process_id</span>    <span class="kt">int64</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">lock</span>          <span class="nx">sync</span><span class="p">.</span><span class="nx">RWMutex</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">sf</span> <span class="o">*</span><span class="nx">SnowFlake</span><span class="p">)</span> <span class="nf">getSequnce</span><span class="p">()</span> <span class="kt">int64</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">sf</span><span class="p">.</span><span class="nx">sequence</span> <span class="o">+=</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">sf</span><span class="p">.</span><span class="nx">sequence</span> <span class="o">%=</span> <span class="nx">max_sequence_id</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">sf</span><span class="p">.</span><span class="nx">sequence</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">sf</span> <span class="o">*</span><span class="nx">SnowFlake</span><span class="p">)</span> <span class="nf">gen</span><span class="p">()</span> <span class="kt">int64</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">sf</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">defer</span> <span class="nx">sf</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">ts</span> <span class="o">:=</span> <span class="nf">make_timestamp</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">seq</span> <span class="o">:=</span> <span class="nx">sf</span><span class="p">.</span><span class="nf">getSequnce</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">ts</span> <span class="o">==</span> <span class="nx">sf</span><span class="p">.</span><span class="nx">last_ts</span> <span class="o">&amp;&amp;</span> <span class="nx">seq</span> <span class="o">&lt;=</span> <span class="nx">sf</span><span class="p">.</span><span class="nx">last_seq</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">1</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">sid</span> <span class="o">:=</span> <span class="nf">make_snowflake</span><span class="p">(</span><span class="nx">ts</span><span class="p">,</span> <span class="nx">sf</span><span class="p">.</span><span class="nx">process_id</span><span class="p">,</span> <span class="nx">sf</span><span class="p">.</span><span class="nx">datacenter_id</span><span class="p">,</span> <span class="nx">seq</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">sf</span><span class="p">.</span><span class="nx">last_ts</span> <span class="p">=</span> <span class="nx">ts</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">sf</span><span class="p">.</span><span class="nx">last_seq</span> <span class="p">=</span> <span class="nx">seq</span>
+</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="nx">sid</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">SnowFlakeCloud</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">zk_namespace</span> <span class="kt">string</span> <span class="c1">//show be unique for each id field
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">lock_path</span>    <span class="kt">string</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">node_path</span>    <span class="kt">string</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">zk_lock</span>      <span class="nx">ZkLockInterface</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">zk_util</span>      <span class="nx">ZkUtilInterface</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">sf</span>           <span class="o">*</span><span class="nx">SnowFlake</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">datacenterID</span> <span class="kt">int64</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">sfc</span> <span class="o">*</span><span class="nx">SnowFlakeCloud</span><span class="p">)</span> <span class="nf">ensure_paths</span><span class="p">(</span><span class="nx">paths</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">zk_util</span><span class="p">.</span><span class="nf">EnsurePaths</span><span class="p">(</span><span class="nx">paths</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">sfc</span> <span class="o">*</span><span class="nx">SnowFlakeCloud</span><span class="p">)</span> <span class="nf">Init</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;sf Init begin&#34;</span><span class="p">,</span> <span class="nx">use_etcd</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">use_etcd</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">sfc</span><span class="p">.</span><span class="nx">zk_util</span> <span class="p">=</span> <span class="nx">_etcd_util</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">_</span> <span class="p">=</span> <span class="nx">sfc</span><span class="p">.</span><span class="nf">ensure_paths</span><span class="p">(</span><span class="nx">sfc</span><span class="p">.</span><span class="nx">lock_path</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">sfc</span><span class="p">.</span><span class="nx">zk_lock</span> <span class="p">=</span> <span class="nf">NewEtcdLock</span><span class="p">(</span><span class="nx">sfc</span><span class="p">.</span><span class="nx">lock_path</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">//_ = sfc.ensure_paths(sfc.node_path)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">sfc</span><span class="p">.</span><span class="nx">zk_util</span> <span class="p">=</span> <span class="nx">_zk_util</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">_</span> <span class="p">=</span> <span class="nx">sfc</span><span class="p">.</span><span class="nf">ensure_paths</span><span class="p">(</span><span class="nx">sfc</span><span class="p">.</span><span class="nx">lock_path</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">sfc</span><span class="p">.</span><span class="nx">zk_lock</span> <span class="p">=</span> <span class="nf">NewZkLock</span><span class="p">(</span><span class="nx">sfc</span><span class="p">.</span><span class="nx">lock_path</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">_</span> <span class="p">=</span> <span class="nx">sfc</span><span class="p">.</span><span class="nf">ensure_paths</span><span class="p">(</span><span class="nx">sfc</span><span class="p">.</span><span class="nx">node_path</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;sf Init success&#34;</span><span class="p">,</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">lock_path</span><span class="p">,</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">node_path</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">sfc</span> <span class="o">*</span><span class="nx">SnowFlakeCloud</span><span class="p">)</span> <span class="nf">register</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">err</span> <span class="o">:=</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">zk_lock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">log</span><span class="p">.</span><span class="nf">Panicln</span><span class="p">(</span><span class="s">&#34;sf lock err&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">nodes</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">zk_util</span><span class="p">.</span><span class="nf">Children</span><span class="p">(</span><span class="nx">sfc</span><span class="p">.</span><span class="nx">node_path</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">log</span><span class="p">.</span><span class="nf">Panicln</span><span class="p">(</span><span class="s">&#34;sf get children err&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;sf exist nodes&#34;</span><span class="p">,</span> <span class="nx">nodes</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="kd">var</span> <span class="nx">pid</span> <span class="kt">int64</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">pid</span> <span class="p">=</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">nodes</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">node_ids</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">int64arr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">nodes</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">s</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">nodes</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">i</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">ParseInt</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">node_ids</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">node_ids</span><span class="p">,</span> <span class="nx">i</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">sort</span><span class="p">.</span><span class="nf">Sort</span><span class="p">(</span><span class="nx">node_ids</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;sf node_ids&#34;</span><span class="p">,</span> <span class="nx">node_ids</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">node_ids</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">node_ids</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">&lt;</span> <span class="nx">max_process_id</span><span class="o">-</span><span class="mi">1</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">pid</span> <span class="p">=</span> <span class="nx">node_ids</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">node_ids</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;node reach max&#34;</span><span class="p">,</span> <span class="nx">node_ids</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">node_ids</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">			<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="nb">int64</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">node_ids</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">node_ids</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;node id&#34;</span><span class="p">,</span> <span class="nx">i</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">				<span class="k">if</span> <span class="nx">i</span><span class="o">+</span><span class="mi">1</span> <span class="o">!=</span> <span class="nx">node_ids</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">					<span class="nx">pid</span> <span class="p">=</span> <span class="nx">i</span> <span class="o">+</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">					<span class="k">break</span>
+</span></span><span class="line"><span class="cl">				<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">i</span> <span class="o">==</span> <span class="nb">int64</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">node_ids</span><span class="p">))</span><span class="o">-</span><span class="mi">1</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">					<span class="nx">pid</span> <span class="p">=</span> <span class="nx">i</span> <span class="o">+</span> <span class="mi">2</span>
+</span></span><span class="line"><span class="cl">					<span class="k">break</span>
+</span></span><span class="line"><span class="cl">				<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">node_ids</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">!=</span> <span class="nx">node_ids</span><span class="p">[</span><span class="nx">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">					<span class="nx">pid</span> <span class="p">=</span> <span class="nx">node_ids</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">					<span class="k">break</span>
+</span></span><span class="line"><span class="cl">				<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;zksnowflake process_id&#34;</span><span class="p">,</span> <span class="nx">pid</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">pid_str</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">FormatInt</span><span class="p">(</span><span class="nx">pid</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">zk_util</span><span class="p">.</span><span class="nf">CreateFlagEphemeral</span><span class="p">(</span><span class="nx">sfc</span><span class="p">.</span><span class="nx">node_path</span><span class="o">+</span><span class="s">&#34;/&#34;</span><span class="o">+</span><span class="nx">pid_str</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">pid_str</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">log</span><span class="p">.</span><span class="nf">Panicln</span><span class="p">(</span><span class="s">&#34;sf Create Ephemeral key err&#34;</span><span class="p">,</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">node_path</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;sf Create Ephemeral key success&#34;</span><span class="p">,</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">node_path</span><span class="p">,</span> <span class="nx">pid</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">sfc</span><span class="p">.</span><span class="nx">sf</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">SnowFlake</span><span class="p">{</span><span class="nx">process_id</span><span class="p">:</span> <span class="nx">pid</span><span class="p">,</span> <span class="nx">datacenter_id</span><span class="p">:</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">datacenterID</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">zk_lock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">log</span><span class="p">.</span><span class="nf">Panicln</span><span class="p">(</span><span class="s">&#34;sf unlock err&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;sf Create Ephemeral key ok&#34;</span><span class="p">,</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">node_path</span><span class="p">,</span> <span class="nx">pid</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">sfc</span> <span class="o">*</span><span class="nx">SnowFlakeCloud</span><span class="p">)</span> <span class="nf">Gen</span><span class="p">()</span> <span class="kt">int64</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">sfc</span><span class="p">.</span><span class="nx">sf</span><span class="p">.</span><span class="nf">gen</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2022-04-27</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/golang/">Golang</a>,&nbsp;<a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/">微服务</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/kubernetes_simple/" class="prev" rel="prev" title="Kubernetes 最简实践"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>Kubernetes 最简实践</a>
+            <a href="/posts/hpa/" class="next" rel="next" title="Kubernetes HPA 浅入深出">Kubernetes HPA 浅入深出<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.125.6">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://github.com/guoweikuang" target="_blank">guoweikuang</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":10},"comment":{}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>
